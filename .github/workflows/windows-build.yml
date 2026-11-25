@@ -154,6 +154,16 @@ jobs:
           $shaders = ninja -C C:\b -t targets all | ForEach-Object { ($_ -split ':')[0] } | Where-Object { $_ -match '^veyra_shader_' } | Sort-Object -Unique
           if ($shaders) { cmake --build C:\b --parallel --target @shaders }
 
+      # Fork check for 去暗角 (devignette): CPU tests only, the runner has no GPU
+      # (veyra_color_grade_gpu_tests runs on a real machine).
+      - name: Devignette tests (settings, presets, looks, library and session)
+        run: |
+          cmake --build C:\b --parallel --target veyra_devignette_settings_tests veyra_color_look_tests veyra_preset_library_tests
+          $t = Join-Path $env:RUNNER_TEMP 'devignette-tests'
+          C:\b\veyra_devignette_settings_tests.exe "$t\settings"
+          C:\b\veyra_color_look_tests.exe "$t\looks"
+          C:\b\veyra_preset_library_tests.exe
+
       - name: Stage portable package
         run: |
           $name = "Veyra-$($env:GITHUB_SHA.Substring(0, 10))-win64-ci-no-gpu-runtimes"

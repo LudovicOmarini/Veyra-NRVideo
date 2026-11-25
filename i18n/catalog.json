@@ -2770,6 +2770,19 @@
    "ru": "Этапы GPU · среднее за 1 с"
   },
   {
+   "zh": "GTA 6 实测暗角",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "GTA 6 實測暗角",
+   "en": "Measured GTA 6 vignette",
+   "ja": "GTA 6 実測ビネット",
+   "ko": "GTA 6 실측 비네트",
+   "es": "Viñeta medida de GTA 6",
+   "fr": "Vignette GTA 6 mesurée",
+   "de": "Gemessene GTA-6-Vignette",
+   "pt-BR": "Vinheta medida do GTA 6",
+   "ru": "Измеренная виньетка GTA 6"
+  },
+  {
    "zh": "GitHub 直连",
    "src": "qml/SettingsPage.qml",
    "zh-TW": "GitHub 直連",
@@ -6605,6 +6618,19 @@
    "ru": "Не действительный файл.vpcolor"
   },
   {
+   "zh": "不校正 HUD（自动检测）",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "不校正 HUD（自動偵測）",
+   "en": "Leave the HUD uncorrected (auto-detect)",
+   "ja": "HUD は補正しない（自動検出）",
+   "ko": "HUD는 보정하지 않음(자동 감지)",
+   "es": "No corregir el HUD (detección automática)",
+   "fr": "Ne pas corriger le HUD (détection auto)",
+   "de": "HUD nicht korrigieren (automatische Erkennung)",
+   "pt-BR": "Não corrigir o HUD (detecção automática)",
+   "ru": "Не корректировать HUD (автоопределение)"
+  },
+  {
    "zh": "不确定就选「自动」。采集 HDR：采集格式选 P010，这里选「HDR · PQ」（游戏机、显卡的 HDR10 都是 PQ）。「HDR · HLG」用于广播信号。「SDR · 709」是普通画面。变更需重连",
    "src": "qml/CaptureSourceDialog.qml",
    "zh-TW": "不確定就選「自動」。擷取 HDR：擷取格式選 P010，這裡選「HDR · PQ」（遊戲機、顯示卡的 HDR10 都是 PQ）。「HDR · HLG」用於廣播信號。「SDR · 709」是普通畫面。變更需重連",
@@ -8124,6 +8150,19 @@
    "de": "Diese Spuren können nicht im aktuellen Container aufbewahrt werden und werden beim Export übersprungen",
    "pt-BR": "Estas faixas não podem ser mantidas no contentor actual e são ignoradas na exportação",
    "ru": "Эти пути не могут храниться в текущем контейнере и пропускаются на экспорт."
+  },
+  {
+   "zh": "以画面百分比表示",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "以畫面百分比表示",
+   "en": "In percent of the frame",
+   "ja": "画面に対するパーセント",
+   "ko": "화면 대비 백분율",
+   "es": "En porcentaje de la imagen",
+   "fr": "En % de l’image",
+   "de": "In Prozent des Bildes",
+   "pt-BR": "Em porcentagem da imagem",
+   "ru": "В процентах от кадра"
   },
   {
    "zh": "任务异常，已停止；请查看诊断",
@@ -11624,6 +11663,32 @@
    "ru": "Управлять пресетами в режиме Pro…"
   },
   {
+   "zh": "去暗角",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "去暗角",
+   "en": "Devignette",
+   "ja": "ビネット除去",
+   "ko": "비네트 제거",
+   "es": "Quitar viñeta",
+   "fr": "Dévignettage",
+   "de": "Vignette entfernen",
+   "pt-BR": "Remover vinheta",
+   "ru": "Удаление виньетки"
+  },
+  {
+   "zh": "去暗角强度",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "去暗角強度",
+   "en": "Strength",
+   "ja": "強さ",
+   "ko": "강도",
+   "es": "Intensidad",
+   "fr": "Force",
+   "de": "Stärke",
+   "pt-BR": "Intensidade",
+   "ru": "Сила"
+  },
+  {
    "zh": "去朦胧",
    "src": "src/ui/bridge/Colour.cpp",
    "zh-TW": "去朦朧",
@@ -11830,6 +11895,19 @@
    "de": "Einstellungen nicht anwendbar; das gesamte Set wurde zurückgerollt",
    "pt-BR": "Não foi possível aplicar as configurações; todo o conjunto foi rodado para trás",
    "ru": "Настройки не применялись; весь набор был откатан назад"
+  },
+  {
+   "zh": "参数是在原始游戏画面上测得的：放在第一个调色节点，并让其他调色滑块保持默认，效果最准确。",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "參數是在原始遊戲畫面上測得的：放在第一個調色節點，並讓其他調色滑桿保持預設，效果最準確。",
+   "en": "The values were measured on the original game picture: use the first colour node and leave the other colour sliders at their defaults for the most accurate result.",
+   "ja": "値は元のゲーム画面で測定されています。最初のカラーノードで使い、ほかのカラースライダーを既定のままにすると最も正確です。",
+   "ko": "값은 원본 게임 화면에서 측정되었습니다. 첫 번째 색 보정 노드에서 사용하고 다른 색 보정 슬라이더를 기본값으로 두면 가장 정확합니다.",
+   "es": "Los valores se midieron sobre la imagen original del juego: úsalo en el primer nodo de color y deja los demás controles de color en sus valores predeterminados para un resultado más exacto.",
+   "fr": "Les valeurs ont été mesurées sur l’image d’origine du jeu : utilise le premier nœud couleur et laisse les autres curseurs couleur par défaut pour un résultat plus juste.",
+   "de": "Die Werte wurden am ursprünglichen Spielbild gemessen: Für das genaueste Ergebnis den ersten Farbknoten verwenden und die übrigen Farbregler auf den Standardwerten lassen.",
+   "pt-BR": "Os valores foram medidos na imagem original do jogo: use o primeiro nó de cor e deixe os outros controles de cor no padrão para o resultado mais preciso.",
+   "ru": "Значения измерены на исходной картинке игры: для наиболее точного результата используйте первый узел цвета и оставьте остальные ползунки цвета по умолчанию."
   },
   {
    "zh": "参数曲线",
@@ -12168,6 +12246,19 @@
    "de": "Eine weitere Anwendungsinstanz ist die Aktualisierung des Fahrerprofils. Versuchen Sie es gleich noch einmal.",
    "pt-BR": "Outra instância de aplicação é atualizar o perfil do driver. Tente novamente em breve.",
    "ru": "Другим примером приложения является обновление профиля драйвера. Попробуй еще раз."
+  },
+  {
+   "zh": "另外排除固定区域",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "另外排除固定區域",
+   "en": "Also exclude a fixed region",
+   "ja": "固定領域も除外",
+   "ko": "고정 영역도 제외",
+   "es": "Excluir también una zona fija",
+   "fr": "Exclure aussi une zone fixe",
+   "de": "Zusätzlich einen festen Bereich ausnehmen",
+   "pt-BR": "Excluir também uma área fixa",
+   "ru": "Также исключить фиксированную область"
   },
   {
    "zh": "另存为",
@@ -13184,6 +13275,58 @@
    "ru": "Всегда последний шаг"
   },
   {
+   "zh": "固定区域 · 上（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "固定區域 · 上（%）",
+   "en": "Fixed region · top (%)",
+   "ja": "固定領域 · 上（%）",
+   "ko": "고정 영역 · 위(%)",
+   "es": "Zona fija · arriba (%)",
+   "fr": "Zone fixe · haut (%)",
+   "de": "Fester Bereich · oben (%)",
+   "pt-BR": "Área fixa · topo (%)",
+   "ru": "Фикс. область · верх (%)"
+  },
+  {
+   "zh": "固定区域 · 下（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "固定區域 · 下（%）",
+   "en": "Fixed region · bottom (%)",
+   "ja": "固定領域 · 下（%）",
+   "ko": "고정 영역 · 아래(%)",
+   "es": "Zona fija · abajo (%)",
+   "fr": "Zone fixe · bas (%)",
+   "de": "Fester Bereich · unten (%)",
+   "pt-BR": "Área fixa · base (%)",
+   "ru": "Фикс. область · низ (%)"
+  },
+  {
+   "zh": "固定区域 · 右（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "固定區域 · 右（%）",
+   "en": "Fixed region · right (%)",
+   "ja": "固定領域 · 右（%）",
+   "ko": "고정 영역 · 오른쪽(%)",
+   "es": "Zona fija · derecha (%)",
+   "fr": "Zone fixe · droite (%)",
+   "de": "Fester Bereich · rechts (%)",
+   "pt-BR": "Área fixa · direita (%)",
+   "ru": "Фикс. область · справа (%)"
+  },
+  {
+   "zh": "固定区域 · 左（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "固定區域 · 左（%）",
+   "en": "Fixed region · left (%)",
+   "ja": "固定領域 · 左（%）",
+   "ko": "고정 영역 · 왼쪽(%)",
+   "es": "Zona fija · izquierda (%)",
+   "fr": "Zone fixe · gauche (%)",
+   "de": "Fester Bereich · links (%)",
+   "pt-BR": "Área fixa · esquerda (%)",
+   "ru": "Фикс. область · слева (%)"
+  },
+  {
    "zh": "固定节点不能复制",
    "src": "src/engine/EffectChain.cpp",
    "zh-TW": "固定節點不能複製",
@@ -13455,6 +13598,19 @@
    "de": "Bildressourcenzuweisung fehlgeschlagen",
    "pt-BR": "Alocação de recursos de imagem falhou",
    "ru": "Распределение ресурсов изображения провалилось"
+  },
+  {
+   "zh": "圆形",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "圓形",
+   "en": "Circular",
+   "ja": "円形",
+   "ko": "원형",
+   "es": "Circular",
+   "fr": "Circulaire",
+   "de": "Kreisförmig",
+   "pt-BR": "Circular",
+   "ru": "Круглая"
   },
   {
    "zh": "圆形 ",
@@ -14599,6 +14755,19 @@
    "de": "Erweiterung mit großen Bildkacheln ist fehlgeschlagen; siehe Diagnose",
    "pt-BR": "O realce em azulejo grande da imagem falhou; veja os diagnósticos",
    "ru": "Улучшение большого изображения не удалось; см. Диагностика"
+  },
+  {
+   "zh": "大图分块处理不支持去暗角，本图未应用去暗角",
+   "src": "src/engine/EngineControllerImage.cpp",
+   "zh-TW": "大圖分塊處理不支援去暗角，本圖未套用去暗角",
+   "en": "Tiled processing of large images does not support devignette; it was not applied to this image",
+   "ja": "大きな画像の分割処理はビネット除去に対応していないため、この画像には適用されていません",
+   "ko": "큰 이미지 분할 처리는 비네트 제거를 지원하지 않아 이 이미지에는 적용되지 않았습니다",
+   "es": "El procesamiento por bloques de imágenes grandes no admite quitar la viñeta; no se aplicó a esta imagen",
+   "fr": "Le traitement par tuiles des grandes images ne prend pas en charge le dévignettage ; il n’a pas été appliqué à cette image",
+   "de": "Die Kachelverarbeitung großer Bilder unterstützt das Entfernen der Vignette nicht; es wurde auf dieses Bild nicht angewendet",
+   "pt-BR": "O processamento em blocos de imagens grandes não suporta remover vinheta; ela não foi aplicada a esta imagem",
+   "ru": "Поблочная обработка больших изображений не поддерживает удаление виньетки; к этому изображению оно не применено"
   },
   {
    "zh": "大图分块处理不支持美颜，本图未应用美颜",
@@ -16354,6 +16523,19 @@
    "de": "Klein",
    "pt-BR": "Pequeno",
    "ru": "Мелкий"
+  },
+  {
+   "zh": "小地图检测阈值",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "小地圖偵測閾值",
+   "en": "Mini-map detection threshold",
+   "ja": "ミニマップ検出しきい値",
+   "ko": "미니맵 감지 임계값",
+   "es": "Umbral de detección del minimapa",
+   "fr": "Seuil de détection mini-carte",
+   "de": "Minikarten-Erkennungsschwelle",
+   "pt-BR": "Limiar de detecção do minimapa",
+   "ru": "Порог обнаружения миникарты"
   },
   {
    "zh": "尚无导出任务",
@@ -24586,6 +24768,19 @@
    "ru": "Тёмная комната"
   },
   {
+   "zh": "暗角形状",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "暗角形狀",
+   "en": "Vignette shape",
+   "ja": "ビネットの形",
+   "ko": "비네트 모양",
+   "es": "Forma de la viñeta",
+   "fr": "Forme de la vignette",
+   "de": "Vignettenform",
+   "pt-BR": "Forma da vinheta",
+   "ru": "Форма виньетки"
+  },
+  {
    "zh": "暗部保护",
    "src": "qml/NrLayerEditor.qml",
    "zh-TW": "暗部保護",
@@ -26391,6 +26586,19 @@
    "de": "Vollbild verlassen, wenn abnormales Wachstum erkannt wird; standardmäßig ausgeschaltet",
    "pt-BR": "Sair do ecrã completo se for detectado um crescimento anormal; desligado por omissão",
    "ru": "Выход полный экран, если обнаружен аномальный рост; выключен по умолчанию"
+  },
+  {
+   "zh": "椭圆",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "橢圓",
+   "en": "Elliptical",
+   "ja": "楕円",
+   "ko": "타원형",
+   "es": "Elíptica",
+   "fr": "Elliptique",
+   "de": "Elliptisch",
+   "pt-BR": "Elíptica",
+   "ru": "Эллиптическая"
   },
   {
    "zh": "模型下载失败，请检查网络后重试",
@@ -28421,6 +28629,19 @@
    "ru": "Очистить память"
   },
   {
+   "zh": "渐变硬度",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "漸變硬度",
+   "en": "Falloff (gradient hardness)",
+   "ja": "減衰（グラデーションの硬さ）",
+   "ko": "감쇠(그라데이션 경도)",
+   "es": "Caída (dureza del degradado)",
+   "fr": "Falloff (dureté du dégradé)",
+   "de": "Abfall (Härte des Verlaufs)",
+   "pt-BR": "Queda (dureza do degradê)",
+   "ru": "Спад (жёсткость градиента)"
+  },
+  {
    "zh": "游戏与程序 · ",
    "src": "qml/PcSourceDialog.qml",
    "zh-TW": "遊戲與程式 · ",
@@ -28445,6 +28666,19 @@
    "de": "GamePP",
    "pt-BR": "GamePP",
    "ru": "Игровой автомат"
+  },
+  {
+   "zh": "游戏在暗角之后绘制 HUD，不应提亮。识别 GTA 6 的小地图、左侧对齐的信息框和字幕。",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "遊戲在暗角之後繪製 HUD，不應提亮。辨識 GTA 6 的小地圖、左側對齊的資訊框和字幕。",
+   "en": "The game draws its HUD after the vignette, so it must not be brightened. Recognises the GTA 6 mini-map, left-aligned boxes and subtitles.",
+   "ja": "ゲームは HUD をビネットの後に描画するため、明るくしてはいけません。GTA 6 のミニマップ、左揃えの情報ボックス、字幕を認識します。",
+   "ko": "게임은 비네트 이후에 HUD를 그리므로 밝게 하면 안 됩니다. GTA 6의 미니맵, 왼쪽 정렬 정보 상자, 자막을 인식합니다.",
+   "es": "El juego dibuja el HUD después de la viñeta, así que no debe aclararse. Reconoce el minimapa, los recuadros alineados a la izquierda y los subtítulos de GTA 6.",
+   "fr": "Le jeu dessine le HUD après la vignette : il ne faut pas l’éclaircir. Reconnaît la mini-carte, les encadrés alignés à gauche et les sous-titres de GTA 6.",
+   "de": "Das Spiel zeichnet das HUD nach der Vignette, es darf also nicht aufgehellt werden. Erkennt die Minikarte, linksbündige Infokästen und Untertitel von GTA 6.",
+   "pt-BR": "O jogo desenha o HUD depois da vinheta, então ele não deve ser clareado. Reconhece o minimapa, as caixas alinhadas à esquerda e as legendas do GTA 6.",
+   "ru": "Игра рисует HUD после виньетки, поэтому его нельзя осветлять. Распознаёт миникарту, блоки с выравниванием по левому краю и субтитры GTA 6."
   },
   {
    "zh": "源 %1 fps",
@@ -42407,6 +42641,19 @@
    "de": "Lichterschutz",
    "pt-BR": "Proteção de realces",
    "ru": "Защита светов"
+  },
+  {
+   "zh": "高光保护：太阳和亮云提亮更少，超出白色的部分柔和过渡而不是被截断。",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "高光保護：太陽和亮雲提亮更少，超出白色的部分柔和過渡而不是被截斷。",
+   "en": "Highlight protection: the sun and bright clouds are brightened less, and anything beyond white rolls off softly instead of clipping.",
+   "ja": "ハイライト保護：太陽や明るい雲はあまり明るくせず、白を超える部分はクリップせず滑らかに丸めます。",
+   "ko": "하이라이트 보호: 태양과 밝은 구름은 덜 밝게 하고, 흰색을 넘는 부분은 잘리지 않고 부드럽게 넘어갑니다.",
+   "es": "Protección de luces: el sol y las nubes claras se aclaran menos, y lo que supera el blanco se suaviza en lugar de recortarse.",
+   "fr": "Protection des hautes lumières : le soleil et les nuages clairs sont moins éclaircis, et ce qui dépasse le blanc est adouci au lieu d’être grillé.",
+   "de": "Lichterschutz: Sonne und helle Wolken werden weniger aufgehellt, und was über Weiß hinausgeht, läuft weich aus statt abzuschneiden.",
+   "pt-BR": "Proteção de realces: o sol e as nuvens claras são menos clareados, e o que passa do branco é suavizado em vez de estourar.",
+   "ru": "Защита светов: солнце и яркие облака осветляются меньше, а всё, что ярче белого, мягко сглаживается, а не обрезается."
   },
   {
    "zh": "高光又亮又多",

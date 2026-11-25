@@ -79,6 +79,15 @@ void EngineController::runLargeImage(HWND window,const sink::RgbaImage& original
                 veyra::log::warn("image-tiles","beauty nodes are not applied to tiled large images");
                 std::lock_guard lock(mutex_);snapshot_.backendWarning=L"大图分块处理不支持美颜，本图未应用美颜";
             }
+            // 去暗角 is positioned in the whole frame (radius from its centre, HUD at
+            // fixed places of a 16:9 picture), which no tile sees; not applied here.
+            bool devignette=desc.color.devignetteStrength>0.0f;
+            desc.color.devignetteStrength=0.0f;
+            for(auto& colour:desc.additionalColors){devignette=devignette||colour.devignetteStrength>0.0f;colour.devignetteStrength=0.0f;}
+            if(devignette){
+                veyra::log::warn("image-tiles","devignette is not applied to tiled large images");
+                std::lock_guard lock(mutex_);snapshot_.backendWarning=L"大图分块处理不支持去暗角，本图未应用去暗角";
+            }
             bool processed=false;
             try{processed=TiledImageProcessor::process(ctx,ring,original,candidate,desc,stop_,stats,[this](uint32_t n,uint32_t total){status(std::format(L"大图分块增强 {}/{} · 每块独立上下文",n,total));});}
             catch(const std::exception& e){veyra::log::warn("image-tiles",std::format("settings exception; retaining previous result: {}",e.what()));}

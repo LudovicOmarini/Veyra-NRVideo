@@ -110,9 +110,22 @@ static bool hasVideoDenoise(const ChainConfiguration& config) {
         (config.editor && config.editor->nodes.firstOf(EffectType::VideoDenoise));
 }
 
+// 去暗角 (devignette) on any colour node: library v27 / session v22, each in its
+// own ".devignette" sidecar so older builds keep their files.
+static bool hasDevignette(const EffectChain& chain) {
+    return std::any_of(chain.nodes.begin(),chain.nodes.begin()+chain.nodeCount,[](const auto& n){
+        return n.type==EffectType::Color&&n.color.hasDevignette();
+    });
+}
+
+static bool hasDevignette(const ChainConfiguration& config) {
+    return hasDevignette(config.chain) || (config.editor && hasDevignette(config.editor->nodes));
+}
+
 bool PresetLibrary::load() {
     error_.clear();
     addBuiltins();
+    const auto directDevignette=std::filesystem::path(path_).concat(L".devignette");
     const auto directDenoise=std::filesystem::path(path_).concat(L".video-denoise");
     const auto directModes=std::filesystem::path(path_).concat(L".exclusion-modes");
     const auto directHalfRate=std::filesystem::path(path_).concat(L".half-rate-variants");
@@ -195,6 +208,9 @@ bool PresetLibrary::load() {
     const auto denoisePath=std::filesystem::path(path_).concat(L".video-denoise");
     if(std::filesystem::exists(directDenoise))path_=directDenoise;
     else if(std::filesystem::exists(denoisePath))path_=denoisePath;
+    const auto devignettePath=std::filesystem::path(path_).concat(L".devignette");
+    if(std::filesystem::exists(directDevignette))path_=directDevignette;
+    else if(std::filesystem::exists(devignettePath))path_=devignettePath;
     if (!std::filesystem::exists(path_)) return true;
     std::error_code ec;
     const auto size = std::filesystem::file_size(path_, ec);
@@ -287,11 +303,14 @@ bool PresetLibrary::save() {
     // v14 (anti-aliasing nodes, chains past 16 nodes) and v15 (beauty nodes) get their own files too.
     // v16 (three-step SR) as well.
     // v22 (「自动」倍率标记, local) gets its own file; v21 is upstream's output-controls.
-    const bool denoiseSidecar=path_.wstring().ends_with(L".video-denoise");
-    const bool upgradeDenoise=!denoiseSidecar && data.starts_with("VEYRA_PRESET_LIBRARY 26\n");
+    // v27 (去暗角 devignette) gets its own sidecar, which then owns later edits.
+    const bool devignetteSidecar=path_.wstring().ends_with(L".devignette");
+    const bool upgradeDevignette=!devignetteSidecar && data.starts_with("VEYRA_PRESET_LIBRARY 27\n");
+    const bool denoiseSidecar=devignetteSidecar||path_.wstring().ends_with(L".video-denoise");
+    const bool upgradeDenoise=!denoiseSidecar && !upgradeDevignette && data.starts_with("VEYRA_PRESET_LIBRARY 26\n");
     const bool separate=denoiseSidecar||path_.wstring().ends_with(L".fg-options");
-    const bool upgrade=!separate && data.starts_with("VEYRA_PRESET_LIBRARY 25\n");
-    if(!separate&&!upgrade&&!upgradeDenoise&&!path_.wstring().ends_with(L".exclusion-modes")&&
+    const bool upgrade=!separate && !upgradeDevignette && data.starts_with("VEYRA_PRESET_LIBRARY 25\n");
+    if(!separate&&!upgrade&&!upgradeDenoise&&!upgradeDevignette&&!path_.wstring().ends_with(L".exclusion-modes")&&
        !path_.wstring().ends_with(L".half-rate-variants")){
     if(data.starts_with("VEYRA_PRESET_LIBRARY 22")&&!path_.wstring().ends_with(L".auto-fg"))path_=std::filesystem::path(path_).concat(L".auto-fg");
     if(data.starts_with("VEYRA_PRESET_LIBRARY 21")&&!path_.wstring().ends_with(L".output-controls"))path_=std::filesystem::path(path_).concat(L".output-controls");
@@ -341,7 +360,8 @@ bool PresetLibrary::save() {
     } // .auto-fg / .output-controls own subsequent edits.
     }
     auto destination=path_;
-    if(upgradeDenoise)destination+=L".video-denoise";
+    if(upgradeDevignette)destination+=L".devignette";
+    else if(upgradeDenoise)destination+=L".video-denoise";
     else if(upgrade)destination+=L".fg-options";
     std::error_code ec;
     std::filesystem::create_directories(destination.parent_path(), ec);
@@ -872,7 +892,10 @@ std::string PresetLibrary::encodeEntries(const std::vector<PresetEntry>& entries
         return e.chain.firstOf(EffectType::VideoDenoise) ||
             (e.nodeConfiguration && hasVideoDenoise(*e.nodeConfiguration));
     });
-    const int version=std::max(minimumVersion, denoise?26:(individualModes||originalHalfRate||rife)?25:autoFg?22:outputControls?21:dlaa?20:anySr?19:videoAi?18:dual?17:srStage?16:beauty?15:effects?14:nrModel?13:dlss?12:tuning?11:flow?10:correctionExtended?9:correction?8:vfg?7:rendering?6:globals?5:editor?4:layerSizes?3:multi?2:1);
+    const bool devignette=std::any_of(entries_.begin(),entries_.end(),[](const auto& e){
+        return e.color.hasDevignette()||hasDevignette(e.chain)||(e.nodeConfiguration&&hasDevignette(*e.nodeConfiguration));
+    });
+    const int version=std::max(minimumVersion, devignette?27:denoise?26:(individualModes||originalHalfRate||rife)?25:autoFg?22:outputControls?21:dlaa?20:anySr?19:videoAi?18:dual?17:srStage?16:beauty?15:effects?14:nrModel?13:dlss?12:tuning?11:flow?10:correctionExtended?9:correction?8:vfg?7:rendering?6:globals?5:editor?4:layerSizes?3:multi?2:1);
     o << "VEYRA_PRESET_LIBRARY " << version << '\n' << std::quoted(utf8(defaultName_)) << ' ' << entries_.size() << '\n';
     for (const auto& e : entries_) {
         o << std::quoted(utf8(e.name)) << ' ' << std::quoted(utf8(e.note)) << ' '
@@ -902,7 +925,7 @@ std::string PresetLibrary::encodeEntries(const std::vector<PresetEntry>& entries
             if(version>=8){writeNrCorrection(o,n.nr.residual.correction,version>=9);o<<' ';}
             if(version>=13)o<<n.nr.model.performance<<' ';
             if (version>=2 && n.type == EffectType::Color) {
-                writeColorSettings(o, n.color, utf8(n.color.lutNameString()));
+                writeColorSettings(o, n.color, utf8(n.color.lutNameString()), version>=27);
                 o << ' ';
             }
             if (version>=14 && n.type == EffectType::AntiAliasing) {
@@ -919,7 +942,7 @@ std::string PresetLibrary::encodeEntries(const std::vector<PresetEntry>& entries
         }
         if (version >= 15) { writeBeautyDetection(o, e.chain.beautyDetection); o << ' '; }
         o << ' ';
-        writeColorSettings(o, e.color, utf8(e.color.lutNameString()));
+        writeColorSettings(o, e.color, utf8(e.color.lutNameString()), version>=27);
         if (version >= 4) {
             o << ' ' << e.nodeConfiguration.has_value();
             if (e.nodeConfiguration) {
@@ -953,7 +976,7 @@ bool PresetLibrary::parse(const std::string& data, std::vector<PresetEntry>& out
     size_t count = 0;
     // v23 adds region modes and the standalone v24 adds cadence value 6.
     // v25 combines both layouts and adds RIFE as a provider.
-    const int allowedVersion=maxVersion>0?std::min(maxVersion,26):26;
+    const int allowedVersion=maxVersion>0?std::min(maxVersion,27):27;
     if (!(in >> magic >> version) || magic != "VEYRA_PRESET_LIBRARY" || version < 1 || version > allowedVersion) {
         error = L"预设库格式或版本不支持"; return false;
     }
@@ -1028,7 +1051,7 @@ bool PresetLibrary::parse(const std::string& data, std::vector<PresetEntry>& out
                 node.nr.model.performance=performance!=0;}
             if (version >= 2 && node.type == EffectType::Color) {
                 std::string lut;
-                if (!readColorSettings(in, node.color, lut, 19) ||
+                if (!readColorSettings(in, node.color, lut, 19, version>=27) ||
                     (!lut.empty() && !node.color.setLutName(wide(lut))) || !node.color.validate().empty()) {
                     error = L"预设库节点调色参数损坏"; return false;
                 }
@@ -1056,7 +1079,7 @@ bool PresetLibrary::parse(const std::string& data, std::vector<PresetEntry>& out
         std::string lut;
         // 19 is the current colour-block schema: it includes the per-section
         // bypass mask that the writer always emits.
-        if (!readColorSettings(in, e.color, lut, 19)) { error = L"预设库调色字段损坏"; return false; }
+        if (!readColorSettings(in, e.color, lut, 19, version>=27)) { error = L"预设库调色字段损坏"; return false; }
         if (!lut.empty() && !e.color.setLutName(wide(lut))) { error = L"预设库 LUT 名称非法"; return false; }
         if (auto problem = e.color.validate(); !problem.empty()) { error = L"预设库调色参数超出范围"; return false; }
         // v1 stores its only grade after the chain, not in the Color node.
@@ -1172,7 +1195,10 @@ std::string ChainSessionStore::encode(const ChainSession& session) {
         return usesRife(c)||(c.editor&&c.editor->globals&&usesRife(*c.editor->globals));
     });
     const bool denoise=std::any_of(session.configurations.begin(),session.configurations.end(),hasVideoDenoise);
-    const int version = denoise?21:(individualModes||session.originalHalfRate||rife)?20:autoFg?17:outputControls?16:dlaa?15:anySr?14:videoAi?13:dual?12:srStage?11:beauty?10:effects?9:nrModel?8:dlss?7:tuning?6:vfg?5:rendering?4:editor ? (editor->globals ? 3 : 2) : 1;
+    // v22: a colour node uses 去暗角; its library payload is then v27.
+    const bool devignette=std::any_of(session.configurations.begin(),session.configurations.end(),
+        [](const ChainConfiguration& c){return hasDevignette(c);});
+    const int version = devignette?22:denoise?21:(individualModes||session.originalHalfRate||rife)?20:autoFg?17:outputControls?16:dlaa?15:anySr?14:videoAi?13:dual?12:srStage?11:beauty?10:effects?9:nrModel?8:dlss?7:tuning?6:vfg?5:rendering?4:editor ? (editor->globals ? 3 : 2) : 1;
     out << "VEYRA_CHAIN_SESSION " << version << '\n' << int(session.active) << ' ' << session.initialized[0] << ' ' << session.initialized[1];
     if(version>=4)out<<' '<<bool(editor);
     if(version>=20)out<<' '<<session.originalHalfRate;
@@ -1228,14 +1254,14 @@ bool ChainSessionStore::decode(const std::string& data, ChainSession& session, b
     std::istringstream in(data); in.imbue(std::locale::classic());
     std::string magic, body; int version = 0, active = 0, list = 0, node = 0;
     if (!(in >> magic >> version >> active >> list >> node) || magic != "VEYRA_CHAIN_SESSION" ||
-        (version < 1 || version > 21) || active < 0 || active > 1 || list != 1 || node < 0 || node > 1) return false;
+        (version < 1 || version > 22) || active < 0 || active > 1 || list != 1 || node < 0 || node > 1) return false;
     int hasEditor=version>=2?1:0;
     if(version>=4&&(!(in>>hasEditor)||hasEditor<0||hasEditor>1))return false;
     ChainSession parsed; parsed.active = ChainMode(active); parsed.initialized = {true, node != 0};
     int original=version==19;
     if(version>=20&&(!(in>>original)||original<0||original>1))return false;
     parsed.originalHalfRate=original!=0;
-    const int presetVersion=version>=21?26:version>=20?25:version==18?23:version>=17?22:
+    const int presetVersion=version>=22?27:version>=21?26:version>=20?25:version==18?23:version>=17?22:
         version>=16?21:version>=15?20:version>=13?18:version>=10?15:version>=9?14:version>=8?13:11;
     for (auto& c : parsed.configurations) {
         int target, backend, flow, optical, half, policy;
@@ -1298,6 +1324,7 @@ bool ChainSessionStore::decode(const std::string& data, ChainSession& session, b
 }
 
 bool ChainSessionStore::load(ChainSession& session) {
+    const auto directDevignette=std::filesystem::path(path_).concat(L".devignette");
     const auto directDenoise=std::filesystem::path(path_).concat(L".video-denoise");
     const auto directModes=std::filesystem::path(path_).concat(L".exclusion-modes");
     const auto directHalfRate=std::filesystem::path(path_).concat(L".half-rate-variants");
@@ -1378,6 +1405,9 @@ bool ChainSessionStore::load(ChainSession& session) {
     const auto denoisePath=std::filesystem::path(path_).concat(L".video-denoise");
     if(std::filesystem::exists(directDenoise,ec))path_=directDenoise;
     else if(std::filesystem::exists(denoisePath,ec))path_=denoisePath;
+    const auto devignettePath=std::filesystem::path(path_).concat(L".devignette");
+    if(std::filesystem::exists(directDevignette,ec))path_=directDevignette;
+    else if(std::filesystem::exists(devignettePath,ec))path_=devignettePath;
     const bool exists = std::filesystem::exists(path_, ec);
     if (!exists && !ec) return true;
     const auto size = std::filesystem::file_size(path_, ec);
@@ -1402,11 +1432,13 @@ bool ChainSessionStore::save(const ChainSession& session) {
     const auto data = encode(session);
     ChainSession checked;
     if (!decode(data, checked)) { error_ = L"模式会话编码校验失败，未保存"; return false; }
-    const bool denoiseSidecar=path_.wstring().ends_with(L".video-denoise");
-    const bool upgradeDenoise=!denoiseSidecar && data.starts_with("VEYRA_CHAIN_SESSION 21\n");
+    const bool devignetteSidecar=path_.wstring().ends_with(L".devignette");
+    const bool upgradeDevignette=!devignetteSidecar && data.starts_with("VEYRA_CHAIN_SESSION 22\n");
+    const bool denoiseSidecar=devignetteSidecar||path_.wstring().ends_with(L".video-denoise");
+    const bool upgradeDenoise=!denoiseSidecar && !upgradeDevignette && data.starts_with("VEYRA_CHAIN_SESSION 21\n");
     const bool separate=denoiseSidecar||path_.wstring().ends_with(L".fg-options");
-    const bool upgrade=!separate && data.starts_with("VEYRA_CHAIN_SESSION 20\n");
-    if(!separate&&!upgrade&&!upgradeDenoise&&!path_.wstring().ends_with(L".exclusion-modes")&&
+    const bool upgrade=!separate && !upgradeDevignette && data.starts_with("VEYRA_CHAIN_SESSION 20\n");
+    if(!separate&&!upgrade&&!upgradeDenoise&&!upgradeDevignette&&!path_.wstring().ends_with(L".exclusion-modes")&&
        !path_.wstring().ends_with(L".half-rate-variants")){
     if(data.starts_with("VEYRA_CHAIN_SESSION 16")&&!path_.wstring().ends_with(L".output-controls"))path_=std::filesystem::path(path_).concat(L".output-controls");
     if(!path_.wstring().ends_with(L".output-controls")){
@@ -1457,7 +1489,8 @@ bool ChainSessionStore::save(const ChainSession& session) {
     }
 
     auto destination=path_;
-    if(upgradeDenoise)destination+=L".video-denoise";
+    if(upgradeDevignette)destination+=L".devignette";
+    else if(upgradeDenoise)destination+=L".video-denoise";
     else if(upgrade)destination+=L".fg-options";
     std::error_code ec;
     if (!destination.parent_path().empty()) std::filesystem::create_directories(destination.parent_path(), ec);

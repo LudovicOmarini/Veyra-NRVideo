@@ -98,6 +98,16 @@ const ColourParam kColourParams[] = {
     {"gradingBalance","平衡",          "颜色分级", -100,   100,   1},
     {"calibrationShadowTint","阴影色调","校准",    -100,   100,   1},
     {"lutStrength",   "LUT 强度",      "LUT",        0,   100,   1},
+    // 去暗角 (devignette): the Dévignetteur's own units (strength/falloff/protection
+    // as on that page, detection score, fixed region in percent of the frame).
+    {"devignetteStrength",    "去暗角强度",         "去暗角", 0,    0.95f, 0.005f},
+    {"devignetteFalloff",     "渐变硬度",           "去暗角", 0.5f, 6,     0.05f},
+    {"devignetteProtect",     "高光保护",           "去暗角", 0,    1,     0.05f},
+    {"devignetteMapThreshold","小地图检测阈值",     "去暗角", 0.3f, 0.9f,  0.01f},
+    {"devignetteMaskLeft",    "固定区域 · 左（%）", "去暗角", 0,    100,   0.5f},
+    {"devignetteMaskTop",     "固定区域 · 上（%）", "去暗角", 0,    100,   0.5f},
+    {"devignetteMaskRight",   "固定区域 · 右（%）", "去暗角", 0,    100,   0.5f},
+    {"devignetteMaskBottom",  "固定区域 · 下（%）", "去暗角", 0,    100,   0.5f},
 };
 
 float* colourScalar(engine::ColorSettings& c, const char* name) {
@@ -126,6 +136,14 @@ float* colourScalar(engine::ColorSettings& c, const char* name) {
     if (n == "gradingBalance") return &c.gradingBalance;
     if (n == "calibrationShadowTint") return &c.calibrationShadowTint;
     if (n == "lutStrength") return &c.lutStrength;
+    if (n == "devignetteStrength") return &c.devignetteStrength;
+    if (n == "devignetteFalloff") return &c.devignetteFalloff;
+    if (n == "devignetteProtect") return &c.devignetteProtect;
+    if (n == "devignetteMapThreshold") return &c.devignetteMapThreshold;
+    if (n == "devignetteMaskLeft") return &c.devignetteMaskLeft;
+    if (n == "devignetteMaskTop") return &c.devignetteMaskTop;
+    if (n == "devignetteMaskRight") return &c.devignetteMaskRight;
+    if (n == "devignetteMaskBottom") return &c.devignetteMaskBottom;
     // Array parameters retain the existing engine units; no UI-only mirrors.
     const auto parts=QString::fromUtf8(name).split('.');
     bool ok=false;
@@ -295,6 +313,8 @@ QVariantMap QmlPlayerBridge::colourStateAt(int index) const {
         {"saturation",double(wheel.saturation)},{"luminance",double(wheel.luminance)}};
     out["curves"]=curves;out["curveSamples"]=samples;out["grading"]=wheels;
     out["lutName"]=QString::fromStdWString(c.lutNameString());out["lutInputSpace"]=c.lutInputSpace;
+    out["devignetteShape"]=c.devignetteShape;out["devignetteHudAuto"]=c.devignetteHudAuto;
+    out["devignetteMaskOn"]=c.devignetteMaskOn;
     return out;
 }
 bool QmlPlayerBridge::setColourCurve(int channel,const QVariantList& points){
@@ -313,7 +333,19 @@ bool QmlPlayerBridge::setColourOption(const QString& name,int value){
     if(name=="blackWhite"&&(value==0||value==1))c.blackWhite=value!=0;
     else if(name=="groupBypassMask"&&value>=0&&value<128)c.groupBypassMask=uint32_t(value);
     else if(name=="lutInputSpace"&&value>=0&&value<=2)c.lutInputSpace=value;
+    else if(name=="devignetteShape"&&(value==engine::ColorSettings::kDevignetteCircle||value==engine::ColorSettings::kDevignetteEllipse))
+        c.devignetteShape=value;
+    else if(name=="devignetteHudAuto"&&(value==0||value==1))c.devignetteHudAuto=value!=0;
+    else if(name=="devignetteMaskOn"&&(value==0||value==1))c.devignetteMaskOn=value!=0;
     else return false;
+    return commitColour(c);
+}
+// One undo step for the measured GTA 6 vignette (strength, falloff and shape
+// together); turns the grade on, as choosing a LUT does.
+bool QmlPlayerBridge::applyDevignetteGta6Preset(){
+    auto c=selectedColourSettings();
+    c.applyGta6Devignette();
+    c.enabled=true;
     return commitColour(c);
 }
 bool QmlPlayerBridge::setColourWheel(int zone,double hue,double saturation,double luminance){
@@ -336,6 +368,7 @@ bool QmlPlayerBridge::resetColourGroup(int group){
     case 5:c.calibrationShadowTint=0;c.calibrationHue=d.calibrationHue;c.calibrationSaturation=d.calibrationSaturation;break;
     case 6:c.clearLut();c.lutStrength=d.lutStrength;c.lutInputSpace=d.lutInputSpace;break;
     case 7:c.texture=c.clarity=c.dehaze=0;break;
+    case 8:c.resetDevignette();break;
     default:return false;
     }
     if(group>=0&&group<7)c.groupBypassMask&=~(1u<<group);

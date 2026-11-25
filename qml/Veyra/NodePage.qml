@@ -1306,6 +1306,7 @@ VPage {
             function setColourOption(n, v) { select(); return veyra.setColourOption(n, v) }
             function setColourWheel(z, h, s, l) { select(); return veyra.setColourWheel(z, h, s, l) }
             function resetColourGroup(g) { select(); return veyra.resetColourGroup(g) }
+            function applyDevignetteGta6Preset() { select(); return veyra.applyDevignetteGta6Preset() }
             readonly property var lutLibrary: veyra.lutLibrary
             readonly property var colourLooks: veyra.colourLooks
             function importLutDialog() { select(); veyra.importLutDialog() }

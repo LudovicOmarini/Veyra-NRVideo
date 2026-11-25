@@ -61,6 +61,31 @@ int wmain(int argc,wchar_t** argv){
         std::string data((std::istreambuf_iterator<char>(check_)),std::istreambuf_iterator<char>());
         check(data=="NOT_A_STORE 9\n","the corrupt original is preserved byte for byte");
     }
+    {
+        // 去暗角: version 3 only when a look uses it, every field round trips.
+        const auto read=[](const std::filesystem::path& path){
+            std::ifstream in(path,std::ios::binary);
+            return std::string((std::istreambuf_iterator<char>(in)),std::istreambuf_iterator<char>());};
+        const auto folder=directory/"devignette";
+        ColorLookStore store(folder);
+        check(store.load()&&store.put(L"plain",sample(),false)&&read(folder/"color-looks.v1").starts_with("VEYRA_COLOR_LOOKS 2\n"),
+            "looks without devignette keep version 2");
+        auto colour=sample();
+        colour.applyGta6Devignette();colour.devignetteProtect=0.4f;colour.devignetteHudAuto=false;
+        colour.devignetteMapThreshold=0.7f;colour.devignetteMaskOn=true;colour.devignetteMaskTop=60;
+        check(store.put(L"GTA 6",colour,false)&&read(folder/"color-looks.v1").starts_with("VEYRA_COLOR_LOOKS 3\n"),
+            "a devignette look writes version 3");
+        ColorLookStore reloaded(folder);
+        check(reloaded.load()&&reloaded.entries().size()==2&&reloaded.entries()[1].color==colour&&
+              reloaded.entries()[0].color==sample(),"devignette fields round trip, other looks unchanged");
+        check(store.exportFile(1,folder/"gta6.vpcolor")&&read(folder/"gta6.vpcolor").starts_with("VEYRA_COLOR_LOOK 3\n"),
+            "exporting a devignette look writes version 3");
+        ColorLookStore other(folder/"other");std::wstring imported;
+        check(other.load()&&other.importFile(folder/"gta6.vpcolor",imported)&&other.entries()[0].color==colour,
+            "a devignette .vpcolor imports every field");
+        auto invalid=colour;invalid.devignetteStrength=1.5f;
+        check(!store.put(L"bad",invalid,false),"an out-of-range devignette strength is refused");
+    }
     if(failures){std::printf("FAIL: colour looks (%d checks)\n",failures);return 1;}
     std::printf("PASS: named colour looks, atomic save, corrupt preservation, .vpcolor round trip\n");
     return 0;

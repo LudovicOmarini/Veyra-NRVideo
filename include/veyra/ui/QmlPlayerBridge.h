@@ -1357,6 +1357,8 @@ public:
     Q_INVOKABLE bool setColourWheel(int zone, double hue, double saturation, double luminance);
     Q_INVOKABLE bool setColourOption(const QString& name, int value);
     Q_INVOKABLE bool resetColourGroup(int group);
+    // 去暗角: the GTA 6 vignette measured by the Dévignetteur, in one undo step.
+    Q_INVOKABLE bool applyDevignetteGta6Preset();
     QVariantList lutLibrary() const;
     QVariantList colourLooks() const;
     Q_INVOKABLE void importLutDialog();

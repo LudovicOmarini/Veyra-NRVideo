@@ -1061,6 +1061,7 @@ private:
     std::string nrReuseIneligibility() const;
     // 纹理 / 清晰度 / 去朦胧 of the list grade fused into input conversion (srcRgba_).
     ColorDetailPass colorDetail_;
+    DevignettePass colorDevignette_;   // 去暗角 after the fused grade and its effects
     // The texture the rest of the graph reads as "the NR result". Without the
     // stabiliser this is residualRgba_; with it, the stabilised copy the pass
     // produces. Set once per frame, read by the SR/FG/tail bindings below.

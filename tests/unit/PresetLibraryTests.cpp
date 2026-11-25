@@ -1611,7 +1611,55 @@ __declspec(noinline) void testVideoDenoiseStorage() {
     check(reader.load(*loaded)&&*loaded==*session,"video denoise: editor graph and detached settings restore");
 }
 
+// 去暗角 (devignette): library v27 and session v22 go to ".devignette" sidecars,
+// leaving the files older builds read untouched.
+__declspec(noinline) void testDevignetteStorage() {
+    const auto path=scratch(L"devignette-library.v1");
+    PresetLibrary library(path);
+    library.setIncludeBuiltins(false);
+    PresetEntry base;base.name=L"Legacy devignette-free preset";base.chain=toChain({});
+    base.contents=presetContentMask(PresetContent::Chain);
+    check(library.load()&&library.put(base),"devignette: write a preset readable by old versions");
+    const auto oldBytes=readBytes(path);
+    EnhancementSettings settings;
+    settings.color.enabled=true;
+    settings.color.applyGta6Devignette();
+    settings.color.devignetteMaskOn=true;settings.color.devignetteMapThreshold=0.65f;
+    auto corrected=base;
+    corrected.name=L"GTA 6 devignette";
+    corrected.chain=toChain(settings);
+    corrected.color=settings.color;
+    const auto newer=std::filesystem::path(path).concat(L".devignette");
+    check(library.put(corrected)&&readBytes(newer).starts_with("VEYRA_PRESET_LIBRARY 27\n")&&
+          readBytes(path)==oldBytes,"devignette: v27 sidecar preserves the prior library");
+    PresetLibrary reopened(path);
+    reopened.setIncludeBuiltins(false);
+    check(reopened.load()&&reopened.entries().size()==2&&reopened.entries().back()==corrected,
+          "devignette: settings survive reopening the library");
+    const auto preset=scratch(L"devignette.vpreset");
+    PresetLibrary imported(scratch(L"import-devignette.v1"));
+    imported.setIncludeBuiltins(false);
+    std::wstring importedName;
+    check(reopened.exportEntry(1,preset)&&imported.load()&&imported.importFile(preset,importedName)&&
+          imported.entries().size()==1&&imported.entries().front()==corrected,
+          "devignette: individual preset export/import round trip");
+
+    const auto sessionPath=scratch(L"devignette-session.v1");
+    auto session=std::make_unique<ChainSession>(ChainSession::initial({}));
+    ChainSessionStore writer(sessionPath);
+    check(writer.save(*session),"devignette: seed a legacy session");
+    const auto saved=readBytes(sessionPath);
+    session->configurations[0].chain=toChain(settings);
+    const auto next=std::filesystem::path(sessionPath).concat(L".devignette");
+    check(writer.save(*session)&&readBytes(sessionPath)==saved&&readBytes(next).starts_with("VEYRA_CHAIN_SESSION 22\n"),
+          "devignette: a corrected colour node upgrades without touching the old session");
+    ChainSessionStore reader(sessionPath);
+    auto loaded=std::make_unique<ChainSession>();
+    check(reader.load(*loaded)&&*loaded==*session,"devignette: session colour node restores every field");
+}
+
 int main(int argc,char** argv) {
+    testDevignetteStorage();
     testVideoDenoiseStorage();
     testDisabledFrameGenerationMatch();
     if(argc==2&&std::string_view(argv[1])=="--dedup-migration"){

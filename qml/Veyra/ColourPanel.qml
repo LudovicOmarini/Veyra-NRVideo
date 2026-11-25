@@ -23,8 +23,8 @@ ColumnLayout {
     property bool compact:false
     // The tab redraw staggers this column's cards (ProPage M31).
     readonly property Item sectionColumn:panel
-    readonly property var sectionCounts:[6,4,1,1,3,7,3,3]
-    readonly property var sections:[qsTr("亮"),qsTr("颜色"),qsTr("曲线"),qsTr("混色器"),qsTr("颜色分级"),qsTr("校准"),"LUT",qsTr("效果")]
+    readonly property var sectionCounts:[6,4,1,1,3,7,3,3,8]
+    readonly property var sections:[qsTr("亮"),qsTr("颜色"),qsTr("曲线"),qsTr("混色器"),qsTr("颜色分级"),qsTr("校准"),"LUT",qsTr("效果"),qsTr("去暗角")]
     readonly property var light:["exposure","contrast","highlights","shadows","whites","blacks"]
     readonly property var colour:["temperature","tint","vibrance","saturation"]
     readonly property var parametric:["paramHighlights","paramLights","paramDarks","paramShadows","splitHighlights","splitMidtones","splitShadows"]
@@ -300,7 +300,7 @@ ColumnLayout {
         }
     }
     Repeater {
-        model:8
+        model:9
         delegate:VAccordion {
             id: section
             required property int index
@@ -425,6 +425,68 @@ ColumnLayout {
                 }
                 Text {
                     Layout.fillWidth:true;text:qsTr("导入的 .cube 保存在程序目录 runtime_local/luts，导出也使用同一份。")
+                    color:Theme.t3;font.pixelSize:11;wrapMode:Text.WordWrap
+                }
+                }
+            }
+            // 去暗角 (Dévignetteur): undo the game's vignette, keep the HUD drawn after it.
+            Loader {
+                Layout.fillWidth:true;active:section.index===8;visible:active
+                sourceComponent:ColumnLayout {
+                spacing:2
+                VRow {
+                    label:qsTr("暗角形状")
+                    VSeg {
+                        objectName:"colour-devignette-shape"
+                        options:[{id:"0",label:qsTr("圆形")},{id:"1",label:qsTr("椭圆")}]
+                        current:String(panel.state.devignetteShape)
+                        onPicked:id=>panel.api.setColourOption("devignetteShape",Number(id))
+                    }
+                }
+                ParameterRows {Layout.fillWidth:true;keys:["devignetteStrength","devignetteFalloff","devignetteProtect"]}
+                Text {
+                    Layout.fillWidth:true
+                    text:qsTr("高光保护：太阳和亮云提亮更少，超出白色的部分柔和过渡而不是被截断。")
+                    color:Theme.t3;font.pixelSize:11;wrapMode:Text.WordWrap
+                }
+                VRow {
+                    label:qsTr("不校正 HUD（自动检测）")
+                    hint:qsTr("游戏在暗角之后绘制 HUD，不应提亮。识别 GTA 6 的小地图、左侧对齐的信息框和字幕。")
+                    VSwitch {
+                        objectName:"colour-devignette-hud"
+                        checked:!!panel.state.devignetteHudAuto
+                        onToggled:checked=>panel.api.setColourOption("devignetteHudAuto",checked?1:0)
+                    }
+                }
+                ParameterRows {
+                    Layout.fillWidth:true;visible:!!panel.state.devignetteHudAuto
+                    keys:["devignetteMapThreshold"]
+                }
+                VRow {
+                    label:qsTr("另外排除固定区域")
+                    hint:qsTr("以画面百分比表示")
+                    VSwitch {
+                        objectName:"colour-devignette-mask"
+                        checked:!!panel.state.devignetteMaskOn
+                        onToggled:checked=>panel.api.setColourOption("devignetteMaskOn",checked?1:0)
+                    }
+                }
+                ParameterRows {
+                    Layout.fillWidth:true;visible:!!panel.state.devignetteMaskOn
+                    keys:["devignetteMaskLeft","devignetteMaskTop","devignetteMaskRight","devignetteMaskBottom"]
+                }
+                RowLayout {
+                    Layout.fillWidth:true
+                    VButton {
+                        objectName:"colour-devignette-gta6"
+                        text:qsTr("GTA 6 实测暗角");ghost:true
+                        onClicked:panel.api.applyDevignetteGta6Preset()
+                    }
+                    Item {Layout.fillWidth:true}
+                }
+                Text {
+                    Layout.fillWidth:true
+                    text:qsTr("参数是在原始游戏画面上测得的：放在第一个调色节点，并让其他调色滑块保持默认，效果最准确。")
                     color:Theme.t3;font.pixelSize:11;wrapMode:Text.WordWrap
                 }
                 }

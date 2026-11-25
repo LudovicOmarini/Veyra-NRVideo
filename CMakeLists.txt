@@ -381,6 +381,10 @@ veyra_add_compute_shader(veyra_shader_color_grade ColorGradePass)
 veyra_add_compute_shader(veyra_shader_color_detail_reduce ColorDetailReduce)
 veyra_add_compute_shader(veyra_shader_color_detail_blur ColorDetailBlur)
 veyra_add_compute_shader(veyra_shader_color_detail_apply ColorDetailApply)
+# 去暗角 (devignette): HUD evidence, HUD regions, correction (DevignettePass).
+veyra_add_compute_shader(veyra_shader_devignette_detect DevignetteDetect)
+veyra_add_compute_shader(veyra_shader_devignette_resolve DevignetteResolve)
+veyra_add_compute_shader(veyra_shader_devignette_apply DevignetteApply)
 veyra_add_compute_shader(veyra_shader_yuy2_to_linear Yuy2ToLinear)
 veyra_add_compute_shader(veyra_shader_packed_capture PackedCaptureToLinear)
 add_dependencies(veyra_shader_rgb_to_linear veyra_shader_yuy2_to_linear)
@@ -494,6 +498,7 @@ add_library(veyra_pipeline STATIC
   src/pipeline/ColorGradeTables.cpp
   src/pipeline/ColorGradeInstance.cpp
   src/pipeline/ColorDetailPass.cpp
+  src/pipeline/DevignettePass.cpp
   src/pipeline/AntiAliasPass.cpp
   src/pipeline/SmaaLookupTables.cpp
   src/pipeline/NrInstance.cpp
@@ -573,7 +578,8 @@ target_link_libraries(veyra_amd_hip_preflight_tests PRIVATE veyra_pipeline)
 add_executable(veyra_lmxxf_runtime_metadata_tests tests/integration/LmxxfNrRuntimeMetadataTests.cpp)
 target_compile_features(veyra_lmxxf_runtime_metadata_tests PRIVATE cxx_std_20)
 target_link_libraries(veyra_lmxxf_runtime_metadata_tests PRIVATE veyra_pipeline)
-add_dependencies(veyra_pipeline veyra_shader_color_grade veyra_shader_color_detail_reduce veyra_shader_color_detail_blur veyra_shader_color_detail_apply)
+add_dependencies(veyra_pipeline veyra_shader_color_grade veyra_shader_color_detail_reduce veyra_shader_color_detail_blur veyra_shader_color_detail_apply
+  veyra_shader_devignette_detect veyra_shader_devignette_resolve veyra_shader_devignette_apply)
 # Spatial anti-aliasing (#53): FXAA / SMAA / MLAA ported from SAOG0721/Magpie
 # d687997 (sources and notices: THIRD_PARTY_NOTICES.md). Quality tiers of one
 # source are separate .dxil variants.
@@ -1868,6 +1874,14 @@ target_link_options(veyra_hdr_tuning_tests PRIVATE /STACK:33554432)
   target_include_directories(veyra_video_ai_settings_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
   target_link_libraries(veyra_video_ai_settings_tests PRIVATE veyra_base)
   target_link_options(veyra_video_ai_settings_tests PRIVATE /STACK:33554432)
+  # 去暗角 (devignette): colour fields, validation, colour block and settings presets v40.
+  add_executable(veyra_devignette_settings_tests tests/unit/DevignetteSettingsTests.cpp src/engine/PresetLibrary.cpp src/engine/PresetStore.cpp src/engine/EffectChain.cpp)
+  target_compile_features(veyra_devignette_settings_tests PRIVATE cxx_std_20)
+  target_compile_options(veyra_devignette_settings_tests PRIVATE /utf-8)
+  target_compile_definitions(veyra_devignette_settings_tests PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+  target_include_directories(veyra_devignette_settings_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  target_link_libraries(veyra_devignette_settings_tests PRIVATE veyra_base)
+  target_link_options(veyra_devignette_settings_tests PRIVATE /STACK:33554432)
   add_executable(veyra_effect_availability_tests tests/unit/EffectAvailabilityTests.cpp)
   target_compile_features(veyra_effect_availability_tests PRIVATE cxx_std_20)
   target_include_directories(veyra_effect_availability_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

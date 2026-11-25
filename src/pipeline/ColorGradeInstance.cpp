@@ -83,7 +83,7 @@ void ColorGradeInstance::createViews(ID3D12Device* device,DescriptorStager& stag
     for(UINT t=0;t<3;++t)stager.stageSrv(textures_[t].Get(),nullptr,pass_.heap.Get(),8+t);
     stageLut(stager);
 }
-bool ColorGradeInstance::dispatch(ID3D12GraphicsCommandList* list,StateTracker& tracker,uint32_t slot,uint32_t width,uint32_t height,bool hdrWorking){
+bool ColorGradeInstance::dispatch(ID3D12GraphicsCommandList* list,StateTracker& tracker,uint32_t slot,uint32_t width,uint32_t height,bool hdrWorking,bool reset){
     if(slot>=uploads_.size()||!input_||!output_||input_==output_)return false;
     auto copy=[&](ID3D12Resource* dst,ID3D12Resource* src,UINT w,UINT h,UINT d,UINT pitch){
         tracker.transition(list,dst,D3D12_RESOURCE_STATE_COPY_DEST);
@@ -112,6 +112,7 @@ bool ColorGradeInstance::dispatch(ID3D12GraphicsCommandList* list,StateTracker& 
     list->Dispatch((width+15)/16,(height+15)/16,1);
     tracker.uavBarrier(list,output_);
     (void)detail_.run(list,tracker,output_,settings_,hdrWorking);
+    (void)devignette_.run(list,tracker,output_,settings_,hdrWorking,reset);
     tracker.transition(list,output_,D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     return true;
 }

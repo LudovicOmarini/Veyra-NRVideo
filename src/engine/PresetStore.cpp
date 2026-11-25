@@ -60,7 +60,15 @@ std::string PresetStore::serialize()const{
     // v37 carries the final mask and the shape bit for either kind of mask.
     // v38 appends the individual content modes to each v37 region block.
     // v39 accepts the original capture cadence and RIFE in existing fields.
-    const bool newFrameOptions=std::any_of(entries_.begin(),entries_.end(),[](const auto& p){
+    // v40 appends the 去暗角 (devignette) block to every colour block. Like the
+    // other optional blocks it is written only when an entry uses it, and the
+    // version implies every earlier field (the v39 layout).
+    const bool devignette=std::any_of(entries_.begin(),entries_.end(),[](const auto& p){
+        if(p.settings.color.hasDevignette())return true;
+        for(unsigned i=0;i<p.settings.additionalColorCount&&i<p.settings.additionalColors.size();++i)
+            if(p.settings.additionalColors[i].hasDevignette())return true;
+        return false;});
+    const bool newFrameOptions=devignette||std::any_of(entries_.begin(),entries_.end(),[](const auto& p){
         return p.settings.content==ContentRate::Capture60To30Original||
             p.settings.frameGenerationBackend==FrameGenerationBackend::Rife;
     });
@@ -80,9 +88,9 @@ std::string PresetStore::serialize()const{
         for(unsigned i=0;i<p.settings.nrLayerCount;++i)if(p.settings.nrLayers[i].residual.correction.extendedControls())return true;
         return false;});
     // v26 introduces appended resolution IDs; old readers reject this schema.
-    std::ostringstream o;o.imbue(std::locale::classic());o<<std::setprecision(std::numeric_limits<float>::max_digits10)<<"VEYRA_PRESETS "<<(newFrameOptions?39:individualModes?38:exclusion?37:anySr?36:videoAi?35:dual?34:srStage?33:nrModel?32:dlss?31:correctionExtended?30:correction?29:vfg?28:rendering?27:higher?26:fsr4?25:hold?24:stack?23:multi?22:21)<<'\n'<<std::quoted(utf8(default_))<<' '<<entries_.size()<<'\n';
-    for(auto& p:entries_){const auto& s=p.settings;const auto& m=s.model;const auto& r=s.residual;o<<std::quoted(utf8(p.name))<<' '<<m.intensity<<' '<<m.tone<<' '<<m.structure<<' '<<m.skin<<' '<<m.style<<' '<<m.autoMask<<' '<<m.uiCorrection<<' '<<r.total<<' '<<r.darken<<' '<<r.brighten<<' '<<r.color<<' '<<r.luminance<<' '<<s.nr<<' '<<s.sr<<' '<<s.multiplier<<' '<<int(s.nrPolicy)<<' '<<int(s.flow)<<' '<<int(s.content)<<' '<<s.protection.enabled<<' '<<s.protection.featherPixels;for(auto q:s.protection.regions){const auto box=protectionConstants(q);for(float coordinate:box)o<<' '<<coordinate;}o<<' '<<s.videoSrQuality<<' '<<int(s.frameGenerationBackend)<<' '<<int(s.srTarget)<<' '<<int(s.opticalFlowBackend)<<' '<<s.amdFlowHalfResolution<<' '<<int(s.audioSync)<<' '<<s.audioOffsetMs<<' '<<int(s.nrRuntime)<<' '<<s.captureCompatible<<' '<<s.lowLatency<<' '<<s.forceSdrPreview<<' '<<int(s.captureAudio)<<' '<<s.exportBitrateMbps<<' '<<s.captureFlipVertical<<' '<<int(s.captureBuffer)<<' ';writeColorSettings(o,s.color,utf8(s.color.lutNameString()));o<<' '<<s.videoHdr.enabled<<' '<<s.videoHdr.contrast<<' '<<s.videoHdr.saturation<<' '<<s.videoHdr.middleGray<<' '<<s.videoHdr.peakNits<<' '<<s.nrTemporal;
-        if(multi||fullSchema){o<<' '<<s.additionalColorCount;for(unsigned i=0;i<s.additionalColorCount;++i){o<<' ';writeColorSettings(o,s.additionalColors[i],utf8(s.additionalColors[i].lutNameString()));}}
+    std::ostringstream o;o.imbue(std::locale::classic());o<<std::setprecision(std::numeric_limits<float>::max_digits10)<<"VEYRA_PRESETS "<<(devignette?40:newFrameOptions?39:individualModes?38:exclusion?37:anySr?36:videoAi?35:dual?34:srStage?33:nrModel?32:dlss?31:correctionExtended?30:correction?29:vfg?28:rendering?27:higher?26:fsr4?25:hold?24:stack?23:multi?22:21)<<'\n'<<std::quoted(utf8(default_))<<' '<<entries_.size()<<'\n';
+    for(auto& p:entries_){const auto& s=p.settings;const auto& m=s.model;const auto& r=s.residual;o<<std::quoted(utf8(p.name))<<' '<<m.intensity<<' '<<m.tone<<' '<<m.structure<<' '<<m.skin<<' '<<m.style<<' '<<m.autoMask<<' '<<m.uiCorrection<<' '<<r.total<<' '<<r.darken<<' '<<r.brighten<<' '<<r.color<<' '<<r.luminance<<' '<<s.nr<<' '<<s.sr<<' '<<s.multiplier<<' '<<int(s.nrPolicy)<<' '<<int(s.flow)<<' '<<int(s.content)<<' '<<s.protection.enabled<<' '<<s.protection.featherPixels;for(auto q:s.protection.regions){const auto box=protectionConstants(q);for(float coordinate:box)o<<' '<<coordinate;}o<<' '<<s.videoSrQuality<<' '<<int(s.frameGenerationBackend)<<' '<<int(s.srTarget)<<' '<<int(s.opticalFlowBackend)<<' '<<s.amdFlowHalfResolution<<' '<<int(s.audioSync)<<' '<<s.audioOffsetMs<<' '<<int(s.nrRuntime)<<' '<<s.captureCompatible<<' '<<s.lowLatency<<' '<<s.forceSdrPreview<<' '<<int(s.captureAudio)<<' '<<s.exportBitrateMbps<<' '<<s.captureFlipVertical<<' '<<int(s.captureBuffer)<<' ';writeColorSettings(o,s.color,utf8(s.color.lutNameString()),devignette);o<<' '<<s.videoHdr.enabled<<' '<<s.videoHdr.contrast<<' '<<s.videoHdr.saturation<<' '<<s.videoHdr.middleGray<<' '<<s.videoHdr.peakNits<<' '<<s.nrTemporal;
+        if(multi||fullSchema){o<<' '<<s.additionalColorCount;for(unsigned i=0;i<s.additionalColorCount;++i){o<<' ';writeColorSettings(o,s.additionalColors[i],utf8(s.additionalColors[i].lutNameString()),devignette);}}
         if(stack||fullSchema){
             o<<' '<<s.nrLayerCount;
             for(unsigned i=0;i<s.nrLayerCount;++i){const auto& n=s.nrLayers[i];
@@ -117,7 +125,7 @@ std::string PresetStore::serialize()const{
 }
 bool PresetStore::parse(const std::string& data,std::vector<UserPreset>& out,std::wstring& def){
     if(data.size()>kMaxPresetBytes)return false;std::istringstream in(data);in.imbue(std::locale::classic());std::string magic,d;int version=0;size_t count=0;
-    if(!(in>>magic>>version)||magic!="VEYRA_PRESETS"||(version<1||version>39)||!(in>>std::quoted(d)>>count)||count>64)return false;def=wide(d);if(!d.empty()&&def.empty())return false;
+    if(!(in>>magic>>version)||magic!="VEYRA_PRESETS"||(version<1||version>40)||!(in>>std::quoted(d)>>count)||count>64)return false;def=wide(d);if(!d.empty()&&def.empty())return false;
     for(size_t i=0;i<count;++i){UserPreset p;std::string n;int policy,flow,content,nr,sr;auto& s=p.settings;auto& m=s.model;auto& r=s.residual;
         if(!(in>>std::quoted(n)>>m.intensity>>m.tone>>m.structure>>m.skin>>m.style>>m.autoMask>>m.uiCorrection>>r.total>>r.darken>>r.brighten>>r.color>>r.luminance>>nr>>sr>>s.multiplier>>policy>>flow>>content))return false;
         if(version>=2){int enabled;if(!(in>>enabled>>s.protection.featherPixels)||enabled<0||enabled>1)return false;s.protection.enabled=enabled!=0;
@@ -148,12 +156,12 @@ bool PresetStore::parse(const std::string& data,std::vector<UserPreset>& out,std
         // v17 appends the capture video-pin buffer policy.
         if(version>=17){int buffer;if(!(in>>buffer)||buffer<0||buffer>2)return false;s.captureBuffer=static_cast<veyra::source::CaptureBufferMode>(buffer);}
         // v18 appends the full colour grade block (see ColorSettings.h).
-        if(version>=18){std::string lut;if(!readColorSettings(in,s.color,lut,version))return false;if(!lut.empty()&&!s.color.setLutName(wide(lut)))return false;}
+        if(version>=18){std::string lut;if(!readColorSettings(in,s.color,lut,version,version>=40))return false;if(!lut.empty()&&!s.color.setLutName(wide(lut)))return false;}
         if(version>=20){int enabled;if(!(in>>enabled>>s.videoHdr.contrast>>s.videoHdr.saturation>>s.videoHdr.middleGray>>s.videoHdr.peakNits)||enabled<0||enabled>1)return false;s.videoHdr.enabled=enabled!=0;} if(version>=21){int temporal=0;if(!(in>>temporal)||temporal<0||temporal>1)return false;s.nrTemporal=temporal!=0;}
         if(version>=22){
             if(!(in>>s.additionalColorCount)||s.additionalColorCount>=kMaxColorInstances)return false;
             for(unsigned c=0;c<s.additionalColorCount;++c){std::string lut;
-                if(!readColorSettings(in,s.additionalColors[c],lut,version))return false;
+                if(!readColorSettings(in,s.additionalColors[c],lut,version,version>=40))return false;
                 if(!lut.empty()&&!s.additionalColors[c].setLutName(wide(lut)))return false;
             }
         }

@@ -1,6 +1,7 @@
 #pragma once
 #include "veyra/pipeline/ColorDetailPass.h"
 #include "veyra/pipeline/ColorGradeTables.h"
+#include "veyra/pipeline/DevignettePass.h"
 #include "veyra/pipeline/GpuPassUtils.h"
 
 namespace veyra::pipeline {
@@ -15,12 +16,16 @@ public:
     bool setLut(ID3D12Device* device,const float* rgb,unsigned size);
     void createViews(ID3D12Device* device,DescriptorStager& stager,ID3D12Resource* input,ID3D12Resource* output);
     void stageLut(DescriptorStager& stager);
+    // `reset` marks a history break (seek, new source, first frame) for the
+    // devignette HUD detection; the grade itself has no history.
     bool dispatch(ID3D12GraphicsCommandList* list,StateTracker& tracker,uint32_t slot,
-                  uint32_t width,uint32_t height,bool hdrWorking);
-    bool identity()const{return tables_.identity;}
+                  uint32_t width,uint32_t height,bool hdrWorking,bool reset=false);
+    // Identity = renders like no grade at all (also no devignette correction).
+    bool identity()const{return tables_.identity&&!DevignettePass::wanted(settings_);}
 private:
     ComputePass pass_;
     ColorDetailPass detail_;   // 纹理 / 清晰度 / 去朦胧 on output_, after the grade
+    DevignettePass devignette_;   // 去暗角 on output_, after the effects
     ColorGradeTables tables_;
     engine::ColorSettings settings_;
     std::array<ComPtr<ID3D12Resource>,3> textures_;

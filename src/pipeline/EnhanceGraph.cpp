@@ -275,7 +275,7 @@ float EnhanceGraph::outputDitherStep() const{
     if(desc_.outputDitherStep>=0.0f)return desc_.outputDitherStep;
     // A master switch that is on but neutral renders exactly like no grading at
     // all (contract), so it must not add noise either - only a real grade does.
-    bool graded=colorActive_&&!colorTables_.identity;
+    bool graded=colorActive_&&(!colorTables_.identity||DevignettePass::wanted(desc_.color));
     if(!graded&&additionalColorActiveCount_){
         for(const auto& instance:additionalColorInstances_)if(instance&&!instance->identity()){graded=true;break;}
     }
@@ -738,7 +738,7 @@ bool EnhanceGraph::dispatchSlotPasses(ID3D12GraphicsCommandList* list,const std:
     for(const auto& pass:passes){
         if(pass.type==engine::EffectType::Color){
             gpuTimer_.mark(list,diagnostics::colorNodeStage(pass.parameter));
-            if(!nodeColorInstances_[pass.parameter]->dispatch(list,tracker_,slot,pass.width,pass.height,desc_.hdrWorking()))return false;
+            if(!nodeColorInstances_[pass.parameter]->dispatch(list,tracker_,slot,pass.width,pass.height,desc_.hdrWorking(),reset))return false;
             gpuTimer_.mark(list,diagnostics::colorNodeStage(pass.parameter),true);
         }else if(pass.type==engine::EffectType::AntiAliasing){
             gpuTimer_.mark(list,diagnostics::aaNodeStage(pass.parameter));
@@ -3650,11 +3650,12 @@ bool EnhanceGraph::process(const AVFrame* frame, double ptsMs, bool reset, Frame
     else convertInput(colorActive_,srcRgba_.Get(),0);
     // A failure only drops the effects (logged once); the graded picture continues.
     if(colorActive_)(void)colorDetail_.run(list,tracker_,srcRgba_.Get(),desc_.color,desc_.hdrWorking());
+    if(colorActive_)(void)colorDevignette_.run(list,tracker_,srcRgba_.Get(),desc_.color,desc_.hdrWorking(),reset);
     if(additionalColorActiveCount_){
         for(size_t i=0;i<additionalColorInstances_.size();++i)if(auto& instance=additionalColorInstances_[i]){
             // additionalColorInstances_[i] is Color parameter i+1.
             gpuTimer_.mark(list,diagnostics::colorNodeStage(unsigned(i+1)));
-            if(!instance->dispatch(list,tracker_,slot,srcW_,srcH_,desc_.hdrWorking()))return false;
+            if(!instance->dispatch(list,tracker_,slot,srcW_,srcH_,desc_.hdrWorking(),reset))return false;
             gpuTimer_.mark(list,diagnostics::colorNodeStage(unsigned(i+1)),true);
         }
     }
@@ -5338,6 +5339,7 @@ void EnhanceGraph::shutdown()
     nrHoldPass_.reset();
     nrReusePass_.reset();
     colorDetail_.close();
+    colorDevignette_.close();
     chromaTex_.Reset();
     lumaTex_.Reset();
     upZeroMotion_.Reset();

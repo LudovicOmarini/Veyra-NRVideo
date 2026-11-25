@@ -92,8 +92,49 @@ struct ColorSettings {
     // is baked as neutral, so the user can A/B one group without losing its
     // numbers. Lives in the settings (not the UI) because it changes the pixels.
     uint32_t groupBypassMask=0;
+    // 去暗角 (devignette, DevignettePass): undoes a vignette the game baked into
+    // its picture. Same parameters and units as the Dévignetteur page: the model
+    // is V(r) = 1 - strength * r^falloff on the sRGB-encoded picture (r = 0 at
+    // the centre, 1 in the corners). strength 0 is off, so the defaults are
+    // neutral. The HUD drawn after the vignette is not corrected: GTA 6 mini-map,
+    // left-aligned boxes and subtitles are detected on the GPU (devignetteHudAuto),
+    // and a fixed region can be excluded too (percent of the frame).
+    // Saved only by the format versions that carry it (see writeColorSettings).
+    static constexpr int kDevignetteCircle=0,kDevignetteEllipse=1;
+    float devignetteStrength=0;          // 0..0.95
+    float devignetteFalloff=2;           // 0.5..6, hardness of the gradient
+    float devignetteProtect=0.7f;        // 0..1, highlight protection
+    int devignetteShape=kDevignetteCircle;
+    bool devignetteHudAuto=true;
+    float devignetteMapThreshold=0.6f;   // 0.3..0.9, mini-map detection score
+    bool devignetteMaskOn=false;
+    float devignetteMaskLeft=0.5f,devignetteMaskTop=77,devignetteMaskRight=18,devignetteMaskBottom=99;
 
     bool operator==(const ColorSettings&)const=default;
+    // True when any devignette field differs from its default: the stores then
+    // write the format version that carries the block.
+    bool hasDevignette()const{
+        const ColorSettings d;
+        return devignetteStrength!=d.devignetteStrength||devignetteFalloff!=d.devignetteFalloff||
+            devignetteProtect!=d.devignetteProtect||devignetteShape!=d.devignetteShape||
+            devignetteHudAuto!=d.devignetteHudAuto||devignetteMapThreshold!=d.devignetteMapThreshold||
+            devignetteMaskOn!=d.devignetteMaskOn||devignetteMaskLeft!=d.devignetteMaskLeft||
+            devignetteMaskTop!=d.devignetteMaskTop||devignetteMaskRight!=d.devignetteMaskRight||
+            devignetteMaskBottom!=d.devignetteMaskBottom;
+    }
+    void resetDevignette(){
+        const ColorSettings d;
+        devignetteStrength=d.devignetteStrength;devignetteFalloff=d.devignetteFalloff;
+        devignetteProtect=d.devignetteProtect;devignetteShape=d.devignetteShape;
+        devignetteHudAuto=d.devignetteHudAuto;devignetteMapThreshold=d.devignetteMapThreshold;
+        devignetteMaskOn=d.devignetteMaskOn;devignetteMaskLeft=d.devignetteMaskLeft;
+        devignetteMaskTop=d.devignetteMaskTop;devignetteMaskRight=d.devignetteMaskRight;
+        devignetteMaskBottom=d.devignetteMaskBottom;
+    }
+    // GTA 6 vignette measured on one hour of gameplay (Dévignetteur preset).
+    void applyGta6Devignette(){
+        devignetteStrength=0.24f;devignetteFalloff=1.45f;devignetteShape=kDevignetteEllipse;
+    }
     // Neutral means "renders exactly like no grading at all", ignoring the
     // master switch: enabled+neutral must be a visual no-op (verified by test),
     // which lets the stage early-out instead of running an identity transform.
@@ -148,6 +189,14 @@ struct ColorSettings {
         if(lutInputSpace<kLutInputCineon||lutInputSpace>kLutInputPq)return "lut input space out of range";
         if(lutName.back()!=0)return "lut name missing terminator";
         for(wchar_t c:lutName){if(c==0)break;if(c<32||c==L'\\'||c==L'/'||c==L':')return "lut name contains invalid characters";}
+        const auto within=[](float v,float lo,float hi){return std::isfinite(v)&&v>=lo&&v<=hi;};
+        if(!within(devignetteStrength,0,0.95f))return "devignette strength out of range";
+        if(!within(devignetteFalloff,0.5f,6))return "devignette falloff out of range";
+        if(!within(devignetteProtect,0,1))return "devignette highlight protection out of range";
+        if(devignetteShape!=kDevignetteCircle&&devignetteShape!=kDevignetteEllipse)return "devignette shape out of range";
+        if(!within(devignetteMapThreshold,0.3f,0.9f))return "devignette detection threshold out of range";
+        for(float v:{devignetteMaskLeft,devignetteMaskTop,devignetteMaskRight,devignetteMaskBottom})
+            if(!within(v,0,100))return "devignette fixed region out of range";
         return {};
     }
 };
@@ -156,7 +205,26 @@ struct ColorSettings {
 // of the on-disk format - never reorder without a new version. The stream is
 // narrow UTF-8 (PresetStore owns the wide/UTF-8 conversion of lutPath) so this
 // header stays free of platform includes.
-inline void writeColorSettings(std::ostream& out,const ColorSettings& c,const std::string& lutPathUtf8){
+// Devignette block (appended to a colour block only by the format versions that
+// carry it: PresetStore v40, preset library v27, chain session v22, colour look
+// v3). Field order is part of those formats.
+inline void writeDevignette(std::ostream& out,const ColorSettings& c){
+    out<<c.devignetteStrength<<' '<<c.devignetteFalloff<<' '<<c.devignetteProtect<<' '<<c.devignetteShape<<' '
+       <<(c.devignetteHudAuto?1:0)<<' '<<c.devignetteMapThreshold<<' '<<(c.devignetteMaskOn?1:0)<<' '
+       <<c.devignetteMaskLeft<<' '<<c.devignetteMaskTop<<' '<<c.devignetteMaskRight<<' '<<c.devignetteMaskBottom;
+}
+inline bool readDevignette(std::istream& in,ColorSettings& c){
+    int hud=0,mask=0;
+    if(!(in>>c.devignetteStrength>>c.devignetteFalloff>>c.devignetteProtect>>c.devignetteShape>>hud
+          >>c.devignetteMapThreshold>>mask>>c.devignetteMaskLeft>>c.devignetteMaskTop>>c.devignetteMaskRight
+          >>c.devignetteMaskBottom)||(hud!=0&&hud!=1)||(mask!=0&&mask!=1))return false;
+    c.devignetteHudAuto=hud!=0;
+    c.devignetteMaskOn=mask!=0;
+    return true;
+}
+// `devignette` appends the devignette block; only callers writing a format
+// version that carries it may pass true.
+inline void writeColorSettings(std::ostream& out,const ColorSettings& c,const std::string& lutPathUtf8,bool devignette=false){
     out<<(c.enabled?1:0)<<' '<<c.temperature<<' '<<c.tint<<' '<<c.exposure<<' '<<c.contrast<<' '<<c.highlights<<' '<<c.shadows<<' '<<c.whites<<' '<<c.blacks<<' '
        <<c.texture<<' '<<c.clarity<<' '<<c.dehaze<<' '<<c.vibrance<<' '<<c.saturation<<' '
        <<c.paramHighlights<<' '<<c.paramLights<<' '<<c.paramDarks<<' '<<c.paramShadows<<' '
@@ -177,11 +245,13 @@ inline void writeColorSettings(std::ostream& out,const ColorSettings& c,const st
     for(const auto& wheel:c.grading)out<<' '<<wheel.hue<<' '<<wheel.saturation<<' '<<wheel.luminance;
     for(float v:c.calibrationHue)out<<' '<<v;
     for(float v:c.calibrationSaturation)out<<' '<<v;
+    if(devignette){out<<' ';writeDevignette(out,c);}
 }
 // `schemaVersion` is the *file* version: v18 files stop after the LUT reference,
 // v19 adds the per-section bypass mask. Callers pass their file's version so old
-// presets keep loading.
-inline bool readColorSettings(std::istream& in,ColorSettings& c,std::string& lutPathUtf8,int schemaVersion=19){
+// presets keep loading. `devignette` reads the devignette block, which the
+// caller's own format version decides (it is not implied by schemaVersion).
+inline bool readColorSettings(std::istream& in,ColorSettings& c,std::string& lutPathUtf8,int schemaVersion=19,bool devignette=false){
     int blackWhite=0,enabled=0;
     if(!(in>>enabled>>c.temperature>>c.tint>>c.exposure>>c.contrast>>c.highlights>>c.shadows>>c.whites>>c.blacks
         >>c.texture>>c.clarity>>c.dehaze>>c.vibrance>>c.saturation
@@ -203,6 +273,7 @@ inline bool readColorSettings(std::istream& in,ColorSettings& c,std::string& lut
     for(auto& wheel:c.grading)if(!(in>>wheel.hue>>wheel.saturation>>wheel.luminance))return false;
     for(float& v:c.calibrationHue)if(!(in>>v))return false;
     for(float& v:c.calibrationSaturation)if(!(in>>v))return false;
+    if(devignette&&!readDevignette(in,c))return false;
     return c.validate().empty();
 }
 } // namespace veyra::engine

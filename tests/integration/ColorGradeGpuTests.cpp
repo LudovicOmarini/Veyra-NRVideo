@@ -16,6 +16,7 @@
 #include "veyra/engine/ColorSettings.h"
 #include "veyra/RuntimePaths.h"
 #include "veyra/engine/ColorLut.h"
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <array>
@@ -216,6 +217,40 @@ __declspec(noinline) void exactExposureTests(){
     settings.additionalColors[0].groupBypassMask=1u<<1; // bypass white balance
     std::vector<uint8_t> bypassed;
     check(ok&&graded->apply(settings)&&linear(*graded,bypassed)&&bypassed==reference,"bypassed white balance restores exact exposure without rebuilding graph");
+}
+// 去暗角 (devignette): a flat grey frame has no HUD, so only the correction
+// shows. The model works on the encoded picture: a pixel at radius r is
+// multiplied by 1/(1 - strength * r^falloff); the centre stays, the corners
+// are lifted, a fixed region and strength 0 keep their pixels.
+__declspec(noinline) void devignetteTests(){
+    constexpr int grey=100;constexpr float strength=0.4f;
+    const auto at=[](const sink::RgbaImage& image,int x,int y){
+        return int(image.pixels[(std::size_t(y)*std::size_t(image.width)+std::size_t(x))*4+1]);};
+    const auto expected=[&](int x,int y){
+        const double u=(x+0.5)/kSize-0.5,v=(y+0.5)/kSize-0.5;
+        const double r=std::min(1.0,std::hypot(u,v)/std::hypot(0.5,0.5));
+        return int(std::lround(grey/(1.0-strength*r*r)));};
+    auto storage=std::make_unique<engine::EnhancementSettings>();auto& s=*storage;
+    s.color.enabled=true;
+    Graph graph;Frame frame;sink::RgbaImage plain,lifted,masked,detected,off;
+    const bool ok=frame.make(grey,grey,grey)&&graph.startColors(s)&&graph.render(frame,plain);
+    s.color.devignetteStrength=strength;s.color.devignetteFalloff=2;s.color.devignetteProtect=0;
+    s.color.devignetteHudAuto=false;
+    const bool liftedOk=ok&&graph.apply(s)&&graph.render(frame,lifted);
+    check(liftedOk&&std::abs(at(lifted,kSize/2,kSize/2)-at(plain,kSize/2,kSize/2))<=1,"devignette leaves the centre as it was");
+    check(liftedOk&&std::abs(at(lifted,0,0)-expected(0,0))<=2&&std::abs(at(lifted,kSize-1,0)-expected(kSize-1,0))<=2,
+          "devignette lifts the corners by 1/(1 - strength r^falloff) on the encoded picture");
+    s.color.devignetteMaskOn=true;
+    s.color.devignetteMaskLeft=0;s.color.devignetteMaskTop=0;s.color.devignetteMaskRight=25;s.color.devignetteMaskBottom=25;
+    check(liftedOk&&graph.apply(s)&&graph.render(frame,masked)&&std::abs(at(masked,0,0)-at(plain,0,0))<=1&&
+          std::abs(at(masked,kSize-1,kSize-1)-expected(kSize-1,kSize-1))<=2,
+          "devignette keeps the fixed region and corrects the rest");
+    s.color.devignetteMaskOn=false;s.color.devignetteHudAuto=true;
+    check(liftedOk&&graph.apply(s)&&graph.render(frame,detected)&&detected.pixels==lifted.pixels,
+          "devignette HUD detection finds nothing on a flat frame");
+    s.color.devignetteStrength=0;
+    check(liftedOk&&graph.apply(s)&&graph.render(frame,off)&&off.pixels==plain.pixels,
+          "devignette strength 0 is bit-identical to the plain grade");
 }
 bool writeDetailReference(const std::filesystem::path& path){
     std::ofstream reference(path,std::ios::binary);
@@ -687,6 +722,7 @@ int wmain(int argc,wchar_t** argv){
         return failures?1:0;
     }
     exactExposureTests();
+    devignetteTests();
     // R5.3: compare complete images, not just hashes or a centre pixel. The
     // independent path rounds ingress to FP16 before grading (fused does not).
     const auto maxDifference=[](const sink::RgbaImage& a,const sink::RgbaImage& b){

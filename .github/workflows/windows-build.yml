@@ -195,6 +195,24 @@ jobs:
             }
           }
           Copy-Item "$env:VCToolsRedistDir\x64\Microsoft.VC143.CRT\*.dll" $stage
+          # OpenSSL (portable update signature check) comes from the runner's
+          # preinstalled C:\Program Files\OpenSSL, the one CMake linked against.
+          $openssl = Join-Path $env:ProgramFiles 'OpenSSL'
+          Copy-Item (Join-Path $openssl 'bin\libcrypto-3-x64.dll') $stage
+          # Every DLL the executable imports directly must ship or be a Windows DLL
+          # (delay-loaded GPU runtimes are listed separately by dumpbin and skipped).
+          $imports = @(); $inImports = $false
+          foreach ($line in (dumpbin /nologo /dependents "$stage\veyra_qml_ui.exe")) {
+            if ($line -match 'has the following dependencies') { $inImports = $true; continue }
+            if ($line -match 'delay load dependencies|Summary') { $inImports = $false }
+            if ($inImports -and $line -match '^\s+(\S+\.dll)\s*$') { $imports += $Matches[1] }
+          }
+          $missing = $imports | Where-Object {
+            -not (Test-Path (Join-Path $stage $_)) -and -not (Test-Path (Join-Path "$env:WINDIR\System32" $_)) -and
+            $_ -notmatch '^(api-ms-win|ext-ms-win)-'
+          }
+          Write-Host "veyra_qml_ui.exe imports: $($imports -join ', ')"
+          if ($missing) { throw "Portable package is missing: $($missing -join ', ')" }
           foreach ($f in 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'README.md', 'README_EN.md') { Copy-Item $f $stage }
           @'
           Veyra Windows CI build for development testing.
@@ -202,6 +220,10 @@ jobs:
           DLSS, XeSS and other proprietary GPU runtimes, RIFE models, and optional audio packages are absent.
           '@ | Set-Content -Encoding utf8 "$stage\CI-BUILD.txt"
           Copy-Item licenses\* "$stage\licenses" -Recurse
+          foreach ($f in 'license.txt', 'LICENSE.txt') {
+            $p = Join-Path $openssl $f
+            if (Test-Path $p) { Copy-Item $p "$stage\licenses\OPENSSL-LICENSE.txt"; break }
+          }
           Copy-Item C:\v\installed\x64-windows\share\ffmpeg\copyright "$stage\licenses\FFMPEG-COPYRIGHT.txt"
           Copy-Item C:\v\installed\x64-windows\share\dav1d\copyright "$stage\licenses\DAV1D-COPYRIGHT.txt"
           Copy-Item C:\v\installed\x64-windows-static\share\libass\copyright "$stage\licenses\LIBASS-COPYRIGHT.txt"

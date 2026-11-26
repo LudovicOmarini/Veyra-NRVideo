@@ -31,8 +31,16 @@ leave its other sliders neutral for the most accurate result.
 | `devignetteMapThreshold` | 0.3 – 0.9 | 0.6 | mini-map detection score (hysteresis −0.15) |
 | `devignetteMaskOn` + `Left/Top/Right/Bottom` | 0 – 100 % | off, 0.5/77/18/99 | extra fixed region left uncorrected |
 
-**GTA 6 实测暗角** applies the vignette measured on one hour of gameplay:
-strength 0.24, falloff 1.45, ellipse (one undo step).
+**GTA 6 实测暗角** applies the vignette measured on an HDR10 PS5 capture:
+strength 0.15, falloff 4, ellipse, centred and unstretched (one undo step).
+Measured on a slow camera pan at normal camera height: frames 0.4–2 s apart
+(same pan speed, so the same motion blur) aligned by a homography on the far
+scenery, then compared at the same scene point; the left/right symmetric part
+is kept, because a sun-related left-to-right ramp follows the pan direction.
+In linear light the sides of the middle band stay at 0.99 of the centre and the
+top corners drop to about 0.93. The earlier preset (0.24, 1.45) fitted these
+data worse than no correction at all. The top-to-bottom level is not covered
+by a horizontal pan, and dark areas gave few points.
 
 ## Implementation
 

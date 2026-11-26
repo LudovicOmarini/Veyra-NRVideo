@@ -151,11 +151,13 @@ struct ColorSettings {
         devignetteMaskTop=d.devignetteMaskTop;devignetteMaskRight=d.devignetteMaskRight;
         devignetteMaskBottom=d.devignetteMaskBottom;
     }
-    // GTA 6 vignette measured on one hour of gameplay (Dévignetteur preset): the
-    // whole geometry, so the centred ellipse comes back whatever was tuned before.
+    // GTA 6 vignette measured on an HDR10 PS5 capture (slow camera pan at normal
+    // height, frames 0.4-2 s apart aligned on the far scenery): flat across the
+    // middle of the picture, a light darkening in the corners only. Sets the whole
+    // geometry, so the centred ellipse comes back whatever was tuned before.
     void applyGta6Devignette(){
         const ColorSettings d;
-        devignetteStrength=0.24f;devignetteFalloff=1.45f;devignetteShape=kDevignetteEllipse;
+        devignetteStrength=0.15f;devignetteFalloff=4.0f;devignetteShape=kDevignetteEllipse;
         devignetteCenterY=d.devignetteCenterY;devignetteCenterX=d.devignetteCenterX;
         devignetteStretch=d.devignetteStretch;devignetteStart=d.devignetteStart;
     }

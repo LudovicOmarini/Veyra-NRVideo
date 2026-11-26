@@ -44,8 +44,8 @@ int wmain(int argc,wchar_t** argv){
     const ColorSettings defaults;
     check(defaults.neutral()&&!defaults.hasDevignette()&&defaults.validate().empty(),"default devignette fields are neutral and valid");
     ColorSettings gta;gta.applyGta6Devignette();
-    check(gta.devignetteStrength==0.24f&&gta.devignetteFalloff==1.45f&&gta.devignetteShape==ColorSettings::kDevignetteEllipse,
-          "the GTA 6 preset is the measured vignette (0.24, 1.45, elliptical)");
+    check(gta.devignetteStrength==0.15f&&gta.devignetteFalloff==4.0f&&gta.devignetteShape==ColorSettings::kDevignetteEllipse,
+          "the GTA 6 preset is the measured vignette (0.15, 4, elliptical)");
     check(!gta.neutral()&&gta.hasDevignette(),"a devignette value makes the grade non-neutral");
     auto tuned=corrected();tuned.applyGta6Devignette();
     check(tuned.devignetteCenterX==0&&tuned.devignetteCenterY==0&&tuned.devignetteStretch==0&&tuned.devignetteStart==0&&

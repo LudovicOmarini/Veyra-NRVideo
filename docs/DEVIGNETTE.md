@@ -27,22 +27,8 @@ leave its other sliders neutral for the most accurate result.
 | `devignetteMapThreshold` | 0.3 – 0.9 | 0.6 | mini-map detection score (hysteresis −0.15) |
 | `devignetteMaskOn` + `Left/Top/Right/Bottom` | 0 – 100 % | off, 0.5/77/18/99 | extra fixed region left uncorrected |
 
-**GTA 6 实测暗角** applies the measured GTA 6 vignette: strength 0.34,
-falloff 3.0, ellipse, vertical centre −25 % (one undo step).
-
-The vignette is not centred: almost none at the top, strong at the bottom.
-It was measured in HDR on a one-minute calibration capture (PS5 → capture card
-→ Veyra recording, HDR10 decoded to nits). The camera tilted slowly up and down
-under a cloudy sky. Optical flow tracked the same sky points across the frame;
-a point's brightness then changes only through the vignette. Vertical profile
-on the left and right thirds, relative to mid-height: top 1.03–1.11, 63 % 0.95,
-74 % 0.86, 84 % 0.74, 95 % 0.60. Fitted in Veyra's domain (sRGB-encoded L/203),
-the model gives centre 0.98, top 0.98, bottom 0.59, sides 0.83, top corners
-0.83, bottom corners 0.30. The sides match the earlier gameplay measurement
-(0.85); the old preset (0.24, 1.45, centred) spread the darkening evenly.
-The best fit lies slightly beyond the −25 % limit (−30 to −35 %, strength 0.23,
-falloff 3.3), but the gain is small. The horizontal shape was not measured: it
-follows from the ellipse.
+**GTA 6 实测暗角** applies the vignette measured on one hour of gameplay:
+strength 0.24, falloff 1.45, ellipse (one undo step).
 
 ## Implementation
 

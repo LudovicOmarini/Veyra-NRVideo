@@ -342,8 +342,8 @@ bool QmlPlayerBridge::setColourOption(const QString& name,int value){
     else return false;
     return commitColour(c);
 }
-// One undo step for the measured GTA 6 vignette (strength, falloff, shape and
-// vertical centre together); turns the grade on, as choosing a LUT does.
+// One undo step for the measured GTA 6 vignette (strength, falloff and shape
+// together); turns the grade on, as choosing a LUT does.
 bool QmlPlayerBridge::applyDevignetteGta6Preset(){
     auto c=selectedColourSettings();
     c.applyGta6Devignette();

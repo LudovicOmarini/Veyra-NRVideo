@@ -136,12 +136,9 @@ struct ColorSettings {
         devignetteMaskTop=d.devignetteMaskTop;devignetteMaskRight=d.devignetteMaskRight;
         devignetteMaskBottom=d.devignetteMaskBottom;
     }
-    // GTA 6 vignette measured in HDR on a calibration capture (vertical camera
-    // tilts, sky tracked by optical flow): almost none at the top, strong at the
-    // bottom, so the centre sits at the top limit (-25 %). Sides ~0.83.
+    // GTA 6 vignette measured on one hour of gameplay (Dévignetteur preset).
     void applyGta6Devignette(){
-        devignetteStrength=0.34f;devignetteFalloff=3.0f;devignetteShape=kDevignetteEllipse;
-        devignetteCenterY=-25;
+        devignetteStrength=0.24f;devignetteFalloff=1.45f;devignetteShape=kDevignetteEllipse;
     }
     // Neutral means "renders exactly like no grading at all", ignoring the
     // master switch: enabled+neutral must be a visual no-op (verified by test),

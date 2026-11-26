@@ -102,7 +102,11 @@ const ColourParam kColourParams[] = {
     // as on that page, detection score, fixed region in percent of the frame).
     {"devignetteStrength",    "去暗角强度",         "去暗角", 0,    0.95f, 0.005f},
     {"devignetteFalloff",     "渐变硬度",           "去暗角", 0.5f, 6,     0.05f},
-    {"devignetteCenterY",     "垂直中心（%）",      "去暗角", -25,  25,    0.5f},
+    {"devignetteCenterY",     "垂直中心（%）",      "去暗角", -50,  50,    0.5f},
+    {"devignetteCenterX",     "水平中心（%）",      "去暗角", -50,  50,    0.5f},
+    {"devignetteStretch",     "横向拉伸（%）",      "去暗角", -50,  50,    0.5f},
+    {"devignetteStart",       "渐变起点（%）",      "去暗角", 0,    80,    0.5f},
+    {"devignetteRoundness",   "矩形圆角（%）",      "去暗角", 0,    100,   1},
     {"devignetteProtect",     "高光保护",           "去暗角", 0,    1,     0.05f},
     {"devignetteMapThreshold","小地图检测阈值",     "去暗角", 0.3f, 0.9f,  0.01f},
     {"devignetteMaskLeft",    "固定区域 · 左（%）", "去暗角", 0,    100,   0.5f},
@@ -140,6 +144,10 @@ float* colourScalar(engine::ColorSettings& c, const char* name) {
     if (n == "devignetteStrength") return &c.devignetteStrength;
     if (n == "devignetteFalloff") return &c.devignetteFalloff;
     if (n == "devignetteCenterY") return &c.devignetteCenterY;
+    if (n == "devignetteCenterX") return &c.devignetteCenterX;
+    if (n == "devignetteStretch") return &c.devignetteStretch;
+    if (n == "devignetteStart") return &c.devignetteStart;
+    if (n == "devignetteRoundness") return &c.devignetteRoundness;
     if (n == "devignetteProtect") return &c.devignetteProtect;
     if (n == "devignetteMapThreshold") return &c.devignetteMapThreshold;
     if (n == "devignetteMaskLeft") return &c.devignetteMaskLeft;
@@ -335,15 +343,15 @@ bool QmlPlayerBridge::setColourOption(const QString& name,int value){
     if(name=="blackWhite"&&(value==0||value==1))c.blackWhite=value!=0;
     else if(name=="groupBypassMask"&&value>=0&&value<128)c.groupBypassMask=uint32_t(value);
     else if(name=="lutInputSpace"&&value>=0&&value<=2)c.lutInputSpace=value;
-    else if(name=="devignetteShape"&&(value==engine::ColorSettings::kDevignetteCircle||value==engine::ColorSettings::kDevignetteEllipse))
+    else if(name=="devignetteShape"&&value>=engine::ColorSettings::kDevignetteCircle&&value<=engine::ColorSettings::kDevignetteRectangle)
         c.devignetteShape=value;
     else if(name=="devignetteHudAuto"&&(value==0||value==1))c.devignetteHudAuto=value!=0;
     else if(name=="devignetteMaskOn"&&(value==0||value==1))c.devignetteMaskOn=value!=0;
     else return false;
     return commitColour(c);
 }
-// One undo step for the measured GTA 6 vignette (strength, falloff and shape
-// together); turns the grade on, as choosing a LUT does.
+// One undo step for the measured GTA 6 vignette (strength, falloff, shape and a
+// centred, unstretched geometry together); turns the grade on, as choosing a LUT does.
 bool QmlPlayerBridge::applyDevignetteGta6Preset(){
     auto c=selectedColourSettings();
     c.applyGta6Devignette();

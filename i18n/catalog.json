@@ -26822,6 +26822,32 @@
    "ru": "Недействительная конфигурация режима; не переключается"
   },
   {
+   "zh": "横向拉伸（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "橫向拉伸（%）",
+   "en": "Stretch (%)",
+   "ja": "横方向の伸縮（%）",
+   "ko": "가로 늘이기(%)",
+   "es": "Estiramiento (%)",
+   "fr": "Étirement (%)",
+   "de": "Streckung (%)",
+   "pt-BR": "Estiramento (%)",
+   "ru": "Растяжение (%)"
+  },
+  {
+   "zh": "横向拉伸：正值让左右两侧更暗，负值让上下更暗。",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "橫向拉伸：正值讓左右兩側更暗，負值讓上下更暗。",
+   "en": "Stretch: positive values darken the left and right sides more, negative values the top and bottom.",
+   "ja": "横方向の伸縮：正の値で左右がより暗く、負の値で上下がより暗くなります。",
+   "ko": "가로 늘이기: 양수는 좌우를, 음수는 위아래를 더 어둡게 합니다.",
+   "es": "Estiramiento: los valores positivos oscurecen más los lados izquierdo y derecho, los negativos arriba y abajo.",
+   "fr": "Étirement : les valeurs positives assombrissent davantage les côtés gauche et droit, les négatives le haut et le bas.",
+   "de": "Streckung: Positive Werte dunkeln die linke und rechte Seite stärker ab, negative oben und unten.",
+   "pt-BR": "Estiramento: valores positivos escurecem mais os lados esquerdo e direito, negativos o alto e embaixo.",
+   "ru": "Растяжение: положительные значения сильнее затемняют левый и правый края, отрицательные — верх и низ."
+  },
+  {
    "zh": "橙色",
    "src": "qml/ColourMixer.qml",
    "zh-TW": "橙色",
@@ -28083,6 +28109,32 @@
    "ru": "Сравнивает источник с предыдущим кадром: пиксели без четкого изменения повторно используют предыдущий вывод; четко измененные области принимают новый результат напрямую."
   },
   {
+   "zh": "水平中心（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "水平中心（%）",
+   "en": "Horizontal centre (%)",
+   "ja": "水平方向の中心（%）",
+   "ko": "가로 중심(%)",
+   "es": "Centro horizontal (%)",
+   "fr": "Centre horizontal (%)",
+   "de": "Horizontale Mitte (%)",
+   "pt-BR": "Centro horizontal (%)",
+   "ru": "Центр по горизонтали (%)"
+  },
+  {
+   "zh": "水平中心：暗角在画面左侧或右侧更重时移动中心（正值向右）。",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "水平中心：暗角在畫面左側或右側更重時移動中心（正值向右）。",
+   "en": "Horizontal centre: move the centre when the vignette is heavier on the left or right of the picture (positive = right).",
+   "ja": "水平方向の中心：ビネットが画面の左または右で強い場合に中心を移動します（正の値で右へ）。",
+   "ko": "가로 중심: 비네트가 화면 왼쪽이나 오른쪽에서 더 강할 때 중심을 옮깁니다(양수 = 오른쪽).",
+   "es": "Centro horizontal: mueve el centro cuando la viñeta es más fuerte a la izquierda o a la derecha de la imagen (positivo = derecha).",
+   "fr": "Centre horizontal : déplace le centre quand la vignette est plus forte à gauche ou à droite de l’image (positif = vers la droite).",
+   "de": "Horizontale Mitte: verschiebt die Mitte, wenn die Vignette links oder rechts im Bild stärker ist (positiv = nach rechts).",
+   "pt-BR": "Centro horizontal: move o centro quando a vinheta é mais forte à esquerda ou à direita da imagem (positivo = para a direita).",
+   "ru": "Центр по горизонтали: смещает центр, если виньетка сильнее слева или справа в кадре (положительное значение = вправо)."
+  },
+  {
    "zh": "没有匹配的格式",
    "src": "qml/CaptureLegacyPicker.qml",
    "zh-TW": "沒有相符的格式",
@@ -28666,6 +28718,19 @@
    "de": "Abfall (Härte des Verlaufs)",
    "pt-BR": "Queda (dureza do degradê)",
    "ru": "Спад (жёсткость градиента)"
+  },
+  {
+   "zh": "渐变起点（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "漸變起點（%）",
+   "en": "Gradient start (%)",
+   "ja": "グラデーションの開始（%）",
+   "ko": "그라데이션 시작(%)",
+   "es": "Inicio del degradado (%)",
+   "fr": "Début du dégradé (%)",
+   "de": "Verlaufsbeginn (%)",
+   "pt-BR": "Início do degradê (%)",
+   "ru": "Начало градиента (%)"
   },
   {
    "zh": "游戏与程序 · ",
@@ -30254,6 +30319,19 @@
    "ru": "Сон (можно разбудить)"
   },
   {
+   "zh": "矩形",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "矩形",
+   "en": "Rectangular",
+   "ja": "長方形",
+   "ko": "직사각형",
+   "es": "Rectangular",
+   "fr": "Rectangulaire",
+   "de": "Rechteckig",
+   "pt-BR": "Retangular",
+   "ru": "Прямоугольная"
+  },
+  {
    "zh": "矩形 ",
    "src": "qml/MaskEditor.qml",
    "zh-TW": "矩形 ",
@@ -30265,6 +30343,32 @@
    "de": "Rechteck ",
    "pt-BR": "Retângulo ",
    "ru": "Прямоугольник "
+  },
+  {
+   "zh": "矩形圆角（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "矩形圓角（%）",
+   "en": "Rectangle roundness (%)",
+   "ja": "長方形の角の丸み（%）",
+   "ko": "직사각형 모서리 둥글기(%)",
+   "es": "Redondez del rectángulo (%)",
+   "fr": "Arrondi du rectangle (%)",
+   "de": "Rundung des Rechtecks (%)",
+   "pt-BR": "Arredondamento do retângulo (%)",
+   "ru": "Скругление прямоугольника (%)"
+  },
+  {
+   "zh": "矩形圆角：0 为直角矩形，100 等同椭圆。渐变起点：画面中央这部分不校正。",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "矩形圓角：0 為直角矩形，100 等同橢圓。漸變起點：畫面中央這部分不校正。",
+   "en": "Rectangle roundness: 0 is a sharp rectangle, 100 the ellipse. Gradient start: this middle part of the picture is not corrected.",
+   "ja": "長方形の角の丸み：0 で角ばった長方形、100 で楕円と同じです。グラデーションの開始：画面中央のこの部分は補正しません。",
+   "ko": "직사각형 모서리 둥글기: 0은 각진 직사각형, 100은 타원과 같습니다. 그라데이션 시작: 화면 가운데 이 부분은 보정하지 않습니다.",
+   "es": "Redondez del rectángulo: 0 es un rectángulo de esquinas vivas, 100 la elipse. Inicio del degradado: esta parte central de la imagen no se corrige.",
+   "fr": "Arrondi du rectangle : 0 donne un rectangle à angles vifs, 100 l’ellipse. Début du dégradé : cette partie centrale de l’image n’est pas corrigée.",
+   "de": "Rundung des Rechtecks: 0 ist ein scharfkantiges Rechteck, 100 die Ellipse. Verlaufsbeginn: Dieser mittlere Bildbereich wird nicht korrigiert.",
+   "pt-BR": "Arredondamento do retângulo: 0 é um retângulo de cantos vivos, 100 a elipse. Início do degradê: esta parte central da imagem não é corrigida.",
+   "ru": "Скругление прямоугольника: 0 — прямоугольник с острыми углами, 100 — эллипс. Начало градиента: эта центральная часть кадра не корректируется."
   },
   {
    "zh": "码率",

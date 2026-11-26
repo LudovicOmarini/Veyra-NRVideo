@@ -1,7 +1,9 @@
 // Devignette, step 3 of 3: per-pixel correction.
 // Vignette model on the encoded picture: V(r) = 1 - strength * r^falloff, with
 // r = 0 at the centre and 1 in the corners (circle: aspect-corrected; ellipse:
-// follows the frame; the centre can be moved vertically). The gain 1/V is
+// follows the frame; rectangle: a superellipse of exponent `power`). The centre
+// can be moved, the shape stretched towards the sides or the top and bottom,
+// and the gradient can start away from the centre. The gain 1/V is
 // reduced on highlights (protect) and removed on the HUD the game drew after its vignette (mask from steps 1-2 plus
 // an optional fixed region). SDR keeps the soft shoulder of the original
 // filter; HDR keeps values above diffuse white instead of compressing them.
@@ -9,9 +11,10 @@
 
 cbuffer Params : register(b0) {
     uint width; uint height; float workingToScene; float strength;
-    float falloff; float protect; float ellipse; float hudAuto;
+    float falloff; float protect; float shape; float hudAuto;
     float maskOn; float maskLeft; float maskTop; float maskRight;
-    float maskBottom; float hdrWorking; float centerY; float pad0;
+    float maskBottom; float hdrWorking; float centerY; float centerX;
+    float stretch; float start; float power; float pad0;
 };
 Texture2D<float4> source : register(t0);
 Texture2D<float> state : register(t1);
@@ -49,12 +52,18 @@ void main(uint3 id : SV_DispatchThreadID)
     const float aspect = float(width) / float(height);
     const float3 col = DvEncode(original.rgb * workingToScene);
 
-    // centerY moves the vignette centre vertically; the radius keeps the centred
-    // normalisation (1 = a corner of a centred vignette), so 0 is the original
-    // model and the far corners of a shifted one may reach past 1.
-    const float2 d = uv - float2(0.5, 0.5 + centerY);
-    const float r = min(ellipse > 0.5 ? length(d) / 0.70710678
-        : length(d * float2(aspect, 1.0)) / length(float2(aspect, 1.0) * 0.5), 1.5);
+    // The radius keeps the centred normalisation (1 = a corner of a centred,
+    // unstretched vignette), so the neutral geometry is the original model and
+    // the far corners of a shifted or stretched one may reach past 1.
+    const float2 d = uv - float2(0.5 + centerX, 0.5 + centerY);
+    float2 q = d / 0.5;   // -1..1 across the frame
+    if (shape < 0.5) q *= float2(aspect, 1.0) * (1.41421356 / length(float2(aspect, 1.0)));
+    q = abs(q * float2(exp(stretch), exp(-stretch)));
+    // p-norm, divided by its value in a corner (q = (1, 1)): p = 2 is the
+    // circle / ellipse, large p tends to a rectangle.
+    float r = power == 2.0 ? length(q) / 1.41421356
+        : pow(pow(max(q.x, 1e-4), power) + pow(max(q.y, 1e-4), power), 1.0 / power) * exp2(-1.0 / power);
+    r = min(max(r - start, 0.0) / (1.0 - start), 1.5);
     const float vignette = 1.0 - strength * pow(max(r, 1e-5), falloff);
     float gain = 1.0 / max(vignette, kDvGainFloor);
 

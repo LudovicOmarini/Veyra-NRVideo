@@ -100,12 +100,23 @@ struct ColorSettings {
     // left-aligned boxes and subtitles are detected on the GPU (devignetteHudAuto),
     // and a fixed region can be excluded too (percent of the frame).
     // Saved only by the format versions that carry it (see writeColorSettings).
-    static constexpr int kDevignetteCircle=0,kDevignetteEllipse=1;
+    // Shapes: circle (aspect-corrected), ellipse (follows the frame), rectangle
+    // (a superellipse between the ellipse and a sharp rectangle, see Roundness).
+    static constexpr int kDevignetteCircle=0,kDevignetteEllipse=1,kDevignetteRectangle=2;
     float devignetteStrength=0;          // 0..0.95
     float devignetteFalloff=2;           // 0.5..6, hardness of the gradient
-    // Vertical position of the vignette centre, percent of the frame height
-    // (-25..25, positive moves it down): for a vignette stronger at one edge.
+    // Position of the vignette centre, percent of the frame height / width
+    // (-50..50, positive moves it down / right): for a vignette stronger at one edge.
     float devignetteCenterY=0;
+    float devignetteCenterX=0;
+    // -50..50 %: positive darkens the sides more than the top and bottom,
+    // negative the top and bottom more than the sides (0 = the shape as it is).
+    float devignetteStretch=0;
+    // 0..80 % of the centre-to-corner radius: the gradient starts there, the
+    // middle of the picture inside it is left untouched (0 = from the centre).
+    float devignetteStart=0;
+    // Rectangle only, 0..100 %: corner roundness (0 = sharp rectangle, 100 = ellipse).
+    float devignetteRoundness=50;
     float devignetteProtect=0.7f;        // 0..1, highlight protection
     int devignetteShape=kDevignetteCircle;
     bool devignetteHudAuto=true;
@@ -119,7 +130,9 @@ struct ColorSettings {
     bool hasDevignette()const{
         const ColorSettings d;
         return devignetteStrength!=d.devignetteStrength||devignetteFalloff!=d.devignetteFalloff||
-            devignetteCenterY!=d.devignetteCenterY||
+            devignetteCenterY!=d.devignetteCenterY||devignetteCenterX!=d.devignetteCenterX||
+            devignetteStretch!=d.devignetteStretch||devignetteStart!=d.devignetteStart||
+            devignetteRoundness!=d.devignetteRoundness||
             devignetteProtect!=d.devignetteProtect||devignetteShape!=d.devignetteShape||
             devignetteHudAuto!=d.devignetteHudAuto||devignetteMapThreshold!=d.devignetteMapThreshold||
             devignetteMaskOn!=d.devignetteMaskOn||devignetteMaskLeft!=d.devignetteMaskLeft||
@@ -129,16 +142,22 @@ struct ColorSettings {
     void resetDevignette(){
         const ColorSettings d;
         devignetteStrength=d.devignetteStrength;devignetteFalloff=d.devignetteFalloff;
-        devignetteCenterY=d.devignetteCenterY;
+        devignetteCenterY=d.devignetteCenterY;devignetteCenterX=d.devignetteCenterX;
+        devignetteStretch=d.devignetteStretch;devignetteStart=d.devignetteStart;
+        devignetteRoundness=d.devignetteRoundness;
         devignetteProtect=d.devignetteProtect;devignetteShape=d.devignetteShape;
         devignetteHudAuto=d.devignetteHudAuto;devignetteMapThreshold=d.devignetteMapThreshold;
         devignetteMaskOn=d.devignetteMaskOn;devignetteMaskLeft=d.devignetteMaskLeft;
         devignetteMaskTop=d.devignetteMaskTop;devignetteMaskRight=d.devignetteMaskRight;
         devignetteMaskBottom=d.devignetteMaskBottom;
     }
-    // GTA 6 vignette measured on one hour of gameplay (Dévignetteur preset).
+    // GTA 6 vignette measured on one hour of gameplay (Dévignetteur preset): the
+    // whole geometry, so the centred ellipse comes back whatever was tuned before.
     void applyGta6Devignette(){
+        const ColorSettings d;
         devignetteStrength=0.24f;devignetteFalloff=1.45f;devignetteShape=kDevignetteEllipse;
+        devignetteCenterY=d.devignetteCenterY;devignetteCenterX=d.devignetteCenterX;
+        devignetteStretch=d.devignetteStretch;devignetteStart=d.devignetteStart;
     }
     // Neutral means "renders exactly like no grading at all", ignoring the
     // master switch: enabled+neutral must be a visual no-op (verified by test),
@@ -197,9 +216,13 @@ struct ColorSettings {
         const auto within=[](float v,float lo,float hi){return std::isfinite(v)&&v>=lo&&v<=hi;};
         if(!within(devignetteStrength,0,0.95f))return "devignette strength out of range";
         if(!within(devignetteFalloff,0.5f,6))return "devignette falloff out of range";
-        if(!within(devignetteCenterY,-25,25))return "devignette vertical centre out of range";
+        if(!within(devignetteCenterY,-50,50))return "devignette vertical centre out of range";
+        if(!within(devignetteCenterX,-50,50))return "devignette horizontal centre out of range";
+        if(!within(devignetteStretch,-50,50))return "devignette stretch out of range";
+        if(!within(devignetteStart,0,80))return "devignette gradient start out of range";
+        if(!within(devignetteRoundness,0,100))return "devignette corner roundness out of range";
         if(!within(devignetteProtect,0,1))return "devignette highlight protection out of range";
-        if(devignetteShape!=kDevignetteCircle&&devignetteShape!=kDevignetteEllipse)return "devignette shape out of range";
+        if(devignetteShape<kDevignetteCircle||devignetteShape>kDevignetteRectangle)return "devignette shape out of range";
         if(!within(devignetteMapThreshold,0.3f,0.9f))return "devignette detection threshold out of range";
         for(float v:{devignetteMaskLeft,devignetteMaskTop,devignetteMaskRight,devignetteMaskBottom})
             if(!within(v,0,100))return "devignette fixed region out of range";
@@ -215,13 +238,15 @@ struct ColorSettings {
 // carry it: PresetStore v40, preset library v27, chain session v22, colour look
 // v3). Field order is part of those formats.
 inline void writeDevignette(std::ostream& out,const ColorSettings& c){
-    out<<c.devignetteStrength<<' '<<c.devignetteFalloff<<' '<<c.devignetteCenterY<<' '<<c.devignetteProtect<<' '<<c.devignetteShape<<' '
+    out<<c.devignetteStrength<<' '<<c.devignetteFalloff<<' '<<c.devignetteCenterY<<' '<<c.devignetteCenterX<<' '
+       <<c.devignetteStretch<<' '<<c.devignetteStart<<' '<<c.devignetteRoundness<<' '<<c.devignetteProtect<<' '<<c.devignetteShape<<' '
        <<(c.devignetteHudAuto?1:0)<<' '<<c.devignetteMapThreshold<<' '<<(c.devignetteMaskOn?1:0)<<' '
        <<c.devignetteMaskLeft<<' '<<c.devignetteMaskTop<<' '<<c.devignetteMaskRight<<' '<<c.devignetteMaskBottom;
 }
 inline bool readDevignette(std::istream& in,ColorSettings& c){
     int hud=0,mask=0;
-    if(!(in>>c.devignetteStrength>>c.devignetteFalloff>>c.devignetteCenterY>>c.devignetteProtect>>c.devignetteShape>>hud
+    if(!(in>>c.devignetteStrength>>c.devignetteFalloff>>c.devignetteCenterY>>c.devignetteCenterX
+          >>c.devignetteStretch>>c.devignetteStart>>c.devignetteRoundness>>c.devignetteProtect>>c.devignetteShape>>hud
           >>c.devignetteMapThreshold>>mask>>c.devignetteMaskLeft>>c.devignetteMaskTop>>c.devignetteMaskRight
           >>c.devignetteMaskBottom)||(hud!=0&&hud!=1)||(mask!=0&&mask!=1))return false;
     c.devignetteHudAuto=hud!=0;

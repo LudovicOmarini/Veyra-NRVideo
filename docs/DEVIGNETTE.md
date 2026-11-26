@@ -18,10 +18,14 @@ leave its other sliders neutral for the most accurate result.
 
 | Field | Range | Default | Meaning |
 |---|---|---|---|
-| `devignetteShape` | circle / ellipse | circle | circle is aspect-corrected, ellipse follows the frame |
+| `devignetteShape` | circle / ellipse / rectangle | circle | circle is aspect-corrected, ellipse follows the frame, rectangle is a superellipse (see roundness) |
+| `devignetteRoundness` | 0 – 100 % | 50 | rectangle only: 0 = sharp rectangle (p-norm exponent 20), 100 = the ellipse (exponent 2) |
 | `devignetteStrength` | 0 – 0.95 | 0 (off) | model V(r) = 1 − strength · r^falloff |
 | `devignetteFalloff` | 0.5 – 6 | 2 | hardness of the gradient |
-| `devignetteCenterY` | −25 – 25 % | 0 | vertical position of the vignette centre (positive = down), for a vignette stronger at the top or bottom |
+| `devignetteStart` | 0 – 80 % | 0 | the gradient starts this far from the centre (percent of the centre-to-corner radius); the middle inside it is untouched |
+| `devignetteStretch` | −50 – 50 % | 0 | positive darkens the sides more than the top and bottom, negative the top and bottom more |
+| `devignetteCenterX` | −50 – 50 % | 0 | horizontal position of the vignette centre (positive = right) |
+| `devignetteCenterY` | −50 – 50 % | 0 | vertical position of the vignette centre (positive = down), for a vignette stronger at the top or bottom |
 | `devignetteProtect` | 0 – 1 | 0.7 | highlight protection + soft shoulder (SDR) |
 | `devignetteHudAuto` | on / off | on | detect and skip the GTA 6 HUD |
 | `devignetteMapThreshold` | 0.3 – 0.9 | 0.6 | mini-map detection score (hysteresis −0.15) |

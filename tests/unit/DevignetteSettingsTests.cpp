@@ -19,6 +19,8 @@ ColorSettings corrected(){
     ColorSettings c;
     c.enabled=true;
     c.applyGta6Devignette();
+    c.devignetteShape=ColorSettings::kDevignetteRectangle;c.devignetteRoundness=35;
+    c.devignetteCenterX=-3.5f;c.devignetteStretch=12.5f;c.devignetteStart=10;
     c.devignetteCenterY=6.5f;c.devignetteProtect=0.35f;c.devignetteHudAuto=false;c.devignetteMapThreshold=0.72f;
     c.devignetteMaskOn=true;c.devignetteMaskLeft=1.5f;c.devignetteMaskTop=70;c.devignetteMaskRight=20;c.devignetteMaskBottom=98.5f;
     return c;
@@ -45,6 +47,9 @@ int wmain(int argc,wchar_t** argv){
     check(gta.devignetteStrength==0.24f&&gta.devignetteFalloff==1.45f&&gta.devignetteShape==ColorSettings::kDevignetteEllipse,
           "the GTA 6 preset is the measured vignette (0.24, 1.45, elliptical)");
     check(!gta.neutral()&&gta.hasDevignette(),"a devignette value makes the grade non-neutral");
+    auto tuned=corrected();tuned.applyGta6Devignette();
+    check(tuned.devignetteCenterX==0&&tuned.devignetteCenterY==0&&tuned.devignetteStretch==0&&tuned.devignetteStart==0&&
+          tuned.devignetteShape==ColorSettings::kDevignetteEllipse,"the GTA 6 preset restores a centred, unstretched ellipse");
     auto reset=corrected();reset.resetDevignette();
     check(!reset.hasDevignette(),"resetting the group restores every devignette default");
 
@@ -52,9 +57,14 @@ int wmain(int argc,wchar_t** argv){
     const auto rejects=[](auto edit){auto c=ColorSettings{};edit(c);return !c.validate().empty();};
     check(rejects([](ColorSettings& c){c.devignetteStrength=0.96f;}),"strength above 0.95 is refused");
     check(rejects([](ColorSettings& c){c.devignetteFalloff=0.4f;}),"falloff below 0.5 is refused");
-    check(rejects([](ColorSettings& c){c.devignetteCenterY=-26;}),"a vertical centre beyond 25 % is refused");
+    check(rejects([](ColorSettings& c){c.devignetteCenterY=-51;}),"a vertical centre beyond 50 % is refused");
+    check(rejects([](ColorSettings& c){c.devignetteCenterX=51;}),"a horizontal centre beyond 50 % is refused");
+    check(rejects([](ColorSettings& c){c.devignetteStretch=-51;}),"a stretch beyond 50 % is refused");
+    check(rejects([](ColorSettings& c){c.devignetteStart=81;}),"a gradient start above 80 % is refused");
+    check(rejects([](ColorSettings& c){c.devignetteRoundness=101;}),"a roundness above 100 % is refused");
+    check(!rejects([](ColorSettings& c){c.devignetteShape=ColorSettings::kDevignetteRectangle;}),"the rectangle shape is accepted");
     check(rejects([](ColorSettings& c){c.devignetteProtect=1.1f;}),"protection above 1 is refused");
-    check(rejects([](ColorSettings& c){c.devignetteShape=2;}),"an unknown shape is refused");
+    check(rejects([](ColorSettings& c){c.devignetteShape=3;}),"an unknown shape is refused");
     check(rejects([](ColorSettings& c){c.devignetteMapThreshold=0.95f;}),"a threshold above 0.9 is refused");
     check(rejects([](ColorSettings& c){c.devignetteMaskBottom=101;}),"a fixed region outside 0..100 % is refused");
     check(rejects([](ColorSettings& c){c.devignetteStrength=std::numeric_limits<float>::quiet_NaN();}),"a NaN strength is refused");
@@ -69,7 +79,7 @@ int wmain(int argc,wchar_t** argv){
         check(roundTrip(corrected(),true,back)&&back==corrected(),"every devignette field round trips");
         ColorSettings old;
         check(roundTrip(corrected(),false,old)&&!old.hasDevignette(),"a reader without the block keeps the defaults");
-        std::istringstream broken("0.24 1.45 0 0.7 1 2 0.6 0 0.5 77 18 99");ColorSettings c;
+        std::istringstream broken("0.24 1.45 0 0 0 0 50 0.7 1 2 0.6 0 0.5 77 18 99");ColorSettings c;
         check(!readDevignette(broken,c),"a boolean outside 0/1 is rejected");
     }
 

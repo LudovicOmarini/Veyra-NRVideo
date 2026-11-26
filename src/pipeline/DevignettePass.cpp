@@ -1,6 +1,7 @@
 #include "veyra/pipeline/DevignettePass.h"
 #include <algorithm>
 #include <bit>
+#include <cmath>
 
 namespace veyra::pipeline {
 namespace {
@@ -28,7 +29,7 @@ bool DevignettePass::prepare(ID3D12Device* device, ID3D12Resource* target)
     // detect / resolve: t0 copy, u0 state. apply: t0 copy, t1 state, u0 target.
     if (!detect_.loadShader("DevignetteDetect.dxil", cs) || !detect_.create(device, cs, 2, 1, 1) ||
         !resolve_.loadShader("DevignetteResolve.dxil", cs) || !resolve_.create(device, cs, 2, 1, 1) ||
-        !apply_.loadShader("DevignetteApply.dxil", cs) || !apply_.create(device, cs, 3, 2, 1, 16)) {
+        !apply_.loadShader("DevignetteApply.dxil", cs) || !apply_.create(device, cs, 3, 2, 1, 20)) {
         close();
         return false;
     }
@@ -87,14 +88,21 @@ bool DevignettePass::run(ID3D12GraphicsCommandList* list, StateTracker& tracker,
     tracker.transition(list, state_.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     tracker.transition(list, target, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     const float pct = 0.01f;
-    const float apply[16] = {std::bit_cast<float>(width_), std::bit_cast<float>(height_), workingToScene,
+    using CS = engine::ColorSettings;
+    const int shape = std::clamp(settings.devignetteShape, CS::kDevignetteCircle, CS::kDevignetteRectangle);
+    // Rectangle roundness 100 % -> exponent 2 (the ellipse), 0 % -> 20 (sharp corners).
+    const float power = shape == CS::kDevignetteRectangle
+        ? 2.0f * std::pow(10.0f, 1.0f - std::clamp(settings.devignetteRoundness, 0.0f, 100.0f) * pct) : 2.0f;
+    const float apply[20] = {std::bit_cast<float>(width_), std::bit_cast<float>(height_), workingToScene,
         std::clamp(settings.devignetteStrength, 0.0f, 0.95f), std::clamp(settings.devignetteFalloff, 0.5f, 6.0f),
         std::clamp(settings.devignetteProtect, 0.0f, 1.0f),
-        settings.devignetteShape == engine::ColorSettings::kDevignetteEllipse ? 1.0f : 0.0f, hud ? 1.0f : 0.0f,
+        float(shape), hud ? 1.0f : 0.0f,
         settings.devignetteMaskOn ? 1.0f : 0.0f,
         std::clamp(settings.devignetteMaskLeft * pct, 0.0f, 1.0f), std::clamp(settings.devignetteMaskTop * pct, 0.0f, 1.0f),
         std::clamp(settings.devignetteMaskRight * pct, 0.0f, 1.0f), std::clamp(settings.devignetteMaskBottom * pct, 0.0f, 1.0f),
-        hdrWorking ? 1.0f : 0.0f, std::clamp(settings.devignetteCenterY * pct, -0.25f, 0.25f), 0};
+        hdrWorking ? 1.0f : 0.0f, std::clamp(settings.devignetteCenterY * pct, -0.5f, 0.5f),
+        std::clamp(settings.devignetteCenterX * pct, -0.5f, 0.5f), std::clamp(settings.devignetteStretch * pct, -0.5f, 0.5f),
+        std::clamp(settings.devignetteStart * pct, 0.0f, 0.8f), power, 0};
     apply_.bind(list, apply, gpuHandleOf(apply_, 0).ptr, gpuHandleOf(apply_, 2).ptr);
     list->Dispatch((width_ + 15) / 16, (height_ + 15) / 16, 1);
     tracker.uavBarrier(list, target);

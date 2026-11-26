@@ -23,7 +23,7 @@ ColumnLayout {
     property bool compact:false
     // The tab redraw staggers this column's cards (ProPage M31).
     readonly property Item sectionColumn:panel
-    readonly property var sectionCounts:[6,4,1,1,3,7,3,3,9]
+    readonly property var sectionCounts:[6,4,1,1,3,7,3,3,13]
     readonly property var sections:[qsTr("亮"),qsTr("颜色"),qsTr("曲线"),qsTr("混色器"),qsTr("颜色分级"),qsTr("校准"),"LUT",qsTr("效果"),qsTr("去暗角")]
     readonly property var light:["exposure","contrast","highlights","shadows","whites","blacks"]
     readonly property var colour:["temperature","tint","vibrance","saturation"]
@@ -438,15 +438,37 @@ ColumnLayout {
                     label:qsTr("暗角形状")
                     VSeg {
                         objectName:"colour-devignette-shape"
-                        options:[{id:"0",label:qsTr("圆形")},{id:"1",label:qsTr("椭圆")}]
+                        options:[{id:"0",label:qsTr("圆形")},{id:"1",label:qsTr("椭圆")},{id:"2",label:qsTr("矩形")}]
                         current:String(panel.state.devignetteShape)
                         onPicked:id=>panel.api.setColourOption("devignetteShape",Number(id))
                     }
                 }
-                ParameterRows {Layout.fillWidth:true;keys:["devignetteStrength","devignetteFalloff","devignetteCenterY","devignetteProtect"]}
+                ParameterRows {
+                    Layout.fillWidth:true;visible:panel.state.devignetteShape===2
+                    keys:["devignetteRoundness"]
+                }
+                ParameterRows {
+                    Layout.fillWidth:true
+                    keys:["devignetteStrength","devignetteFalloff","devignetteStart","devignetteStretch","devignetteCenterX","devignetteCenterY","devignetteProtect"]
+                }
+                Text {
+                    Layout.fillWidth:true
+                    text:qsTr("矩形圆角：0 为直角矩形，100 等同椭圆。渐变起点：画面中央这部分不校正。")
+                    color:Theme.t3;font.pixelSize:11;wrapMode:Text.WordWrap
+                }
+                Text {
+                    Layout.fillWidth:true
+                    text:qsTr("横向拉伸：正值让左右两侧更暗，负值让上下更暗。")
+                    color:Theme.t3;font.pixelSize:11;wrapMode:Text.WordWrap
+                }
                 Text {
                     Layout.fillWidth:true
                     text:qsTr("垂直中心：暗角在画面上方或下方更重时移动中心（正值向下）。")
+                    color:Theme.t3;font.pixelSize:11;wrapMode:Text.WordWrap
+                }
+                Text {
+                    Layout.fillWidth:true
+                    text:qsTr("水平中心：暗角在画面左侧或右侧更重时移动中心（正值向右）。")
                     color:Theme.t3;font.pixelSize:11;wrapMode:Text.WordWrap
                 }
                 Text {

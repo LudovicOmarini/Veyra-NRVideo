@@ -19,7 +19,7 @@ ColorSettings corrected(){
     ColorSettings c;
     c.enabled=true;
     c.applyGta6Devignette();
-    c.devignetteProtect=0.35f;c.devignetteHudAuto=false;c.devignetteMapThreshold=0.72f;
+    c.devignetteCenterY=6.5f;c.devignetteProtect=0.35f;c.devignetteHudAuto=false;c.devignetteMapThreshold=0.72f;
     c.devignetteMaskOn=true;c.devignetteMaskLeft=1.5f;c.devignetteMaskTop=70;c.devignetteMaskRight=20;c.devignetteMaskBottom=98.5f;
     return c;
 }
@@ -52,6 +52,7 @@ int wmain(int argc,wchar_t** argv){
     const auto rejects=[](auto edit){auto c=ColorSettings{};edit(c);return !c.validate().empty();};
     check(rejects([](ColorSettings& c){c.devignetteStrength=0.96f;}),"strength above 0.95 is refused");
     check(rejects([](ColorSettings& c){c.devignetteFalloff=0.4f;}),"falloff below 0.5 is refused");
+    check(rejects([](ColorSettings& c){c.devignetteCenterY=-26;}),"a vertical centre beyond 25 % is refused");
     check(rejects([](ColorSettings& c){c.devignetteProtect=1.1f;}),"protection above 1 is refused");
     check(rejects([](ColorSettings& c){c.devignetteShape=2;}),"an unknown shape is refused");
     check(rejects([](ColorSettings& c){c.devignetteMapThreshold=0.95f;}),"a threshold above 0.9 is refused");
@@ -68,7 +69,7 @@ int wmain(int argc,wchar_t** argv){
         check(roundTrip(corrected(),true,back)&&back==corrected(),"every devignette field round trips");
         ColorSettings old;
         check(roundTrip(corrected(),false,old)&&!old.hasDevignette(),"a reader without the block keeps the defaults");
-        std::istringstream broken("0.24 1.45 0.7 1 2 0.6 0 0.5 77 18 99");ColorSettings c;
+        std::istringstream broken("0.24 1.45 0 0.7 1 2 0.6 0 0.5 77 18 99");ColorSettings c;
         check(!readDevignette(broken,c),"a boolean outside 0/1 is rejected");
     }
 

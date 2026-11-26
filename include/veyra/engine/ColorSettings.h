@@ -103,6 +103,9 @@ struct ColorSettings {
     static constexpr int kDevignetteCircle=0,kDevignetteEllipse=1;
     float devignetteStrength=0;          // 0..0.95
     float devignetteFalloff=2;           // 0.5..6, hardness of the gradient
+    // Vertical position of the vignette centre, percent of the frame height
+    // (-25..25, positive moves it down): for a vignette stronger at one edge.
+    float devignetteCenterY=0;
     float devignetteProtect=0.7f;        // 0..1, highlight protection
     int devignetteShape=kDevignetteCircle;
     bool devignetteHudAuto=true;
@@ -116,6 +119,7 @@ struct ColorSettings {
     bool hasDevignette()const{
         const ColorSettings d;
         return devignetteStrength!=d.devignetteStrength||devignetteFalloff!=d.devignetteFalloff||
+            devignetteCenterY!=d.devignetteCenterY||
             devignetteProtect!=d.devignetteProtect||devignetteShape!=d.devignetteShape||
             devignetteHudAuto!=d.devignetteHudAuto||devignetteMapThreshold!=d.devignetteMapThreshold||
             devignetteMaskOn!=d.devignetteMaskOn||devignetteMaskLeft!=d.devignetteMaskLeft||
@@ -125,6 +129,7 @@ struct ColorSettings {
     void resetDevignette(){
         const ColorSettings d;
         devignetteStrength=d.devignetteStrength;devignetteFalloff=d.devignetteFalloff;
+        devignetteCenterY=d.devignetteCenterY;
         devignetteProtect=d.devignetteProtect;devignetteShape=d.devignetteShape;
         devignetteHudAuto=d.devignetteHudAuto;devignetteMapThreshold=d.devignetteMapThreshold;
         devignetteMaskOn=d.devignetteMaskOn;devignetteMaskLeft=d.devignetteMaskLeft;
@@ -192,6 +197,7 @@ struct ColorSettings {
         const auto within=[](float v,float lo,float hi){return std::isfinite(v)&&v>=lo&&v<=hi;};
         if(!within(devignetteStrength,0,0.95f))return "devignette strength out of range";
         if(!within(devignetteFalloff,0.5f,6))return "devignette falloff out of range";
+        if(!within(devignetteCenterY,-25,25))return "devignette vertical centre out of range";
         if(!within(devignetteProtect,0,1))return "devignette highlight protection out of range";
         if(devignetteShape!=kDevignetteCircle&&devignetteShape!=kDevignetteEllipse)return "devignette shape out of range";
         if(!within(devignetteMapThreshold,0.3f,0.9f))return "devignette detection threshold out of range";
@@ -209,13 +215,13 @@ struct ColorSettings {
 // carry it: PresetStore v40, preset library v27, chain session v22, colour look
 // v3). Field order is part of those formats.
 inline void writeDevignette(std::ostream& out,const ColorSettings& c){
-    out<<c.devignetteStrength<<' '<<c.devignetteFalloff<<' '<<c.devignetteProtect<<' '<<c.devignetteShape<<' '
+    out<<c.devignetteStrength<<' '<<c.devignetteFalloff<<' '<<c.devignetteCenterY<<' '<<c.devignetteProtect<<' '<<c.devignetteShape<<' '
        <<(c.devignetteHudAuto?1:0)<<' '<<c.devignetteMapThreshold<<' '<<(c.devignetteMaskOn?1:0)<<' '
        <<c.devignetteMaskLeft<<' '<<c.devignetteMaskTop<<' '<<c.devignetteMaskRight<<' '<<c.devignetteMaskBottom;
 }
 inline bool readDevignette(std::istream& in,ColorSettings& c){
     int hud=0,mask=0;
-    if(!(in>>c.devignetteStrength>>c.devignetteFalloff>>c.devignetteProtect>>c.devignetteShape>>hud
+    if(!(in>>c.devignetteStrength>>c.devignetteFalloff>>c.devignetteCenterY>>c.devignetteProtect>>c.devignetteShape>>hud
           >>c.devignetteMapThreshold>>mask>>c.devignetteMaskLeft>>c.devignetteMaskTop>>c.devignetteMaskRight
           >>c.devignetteMaskBottom)||(hud!=0&&hud!=1)||(mask!=0&&mask!=1))return false;
     c.devignetteHudAuto=hud!=0;

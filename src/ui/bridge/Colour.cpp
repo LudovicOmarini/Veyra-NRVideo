@@ -102,6 +102,7 @@ const ColourParam kColourParams[] = {
     // as on that page, detection score, fixed region in percent of the frame).
     {"devignetteStrength",    "去暗角强度",         "去暗角", 0,    0.95f, 0.005f},
     {"devignetteFalloff",     "渐变硬度",           "去暗角", 0.5f, 6,     0.05f},
+    {"devignetteCenterY",     "垂直中心（%）",      "去暗角", -25,  25,    0.5f},
     {"devignetteProtect",     "高光保护",           "去暗角", 0,    1,     0.05f},
     {"devignetteMapThreshold","小地图检测阈值",     "去暗角", 0.3f, 0.9f,  0.01f},
     {"devignetteMaskLeft",    "固定区域 · 左（%）", "去暗角", 0,    100,   0.5f},
@@ -138,6 +139,7 @@ float* colourScalar(engine::ColorSettings& c, const char* name) {
     if (n == "lutStrength") return &c.lutStrength;
     if (n == "devignetteStrength") return &c.devignetteStrength;
     if (n == "devignetteFalloff") return &c.devignetteFalloff;
+    if (n == "devignetteCenterY") return &c.devignetteCenterY;
     if (n == "devignetteProtect") return &c.devignetteProtect;
     if (n == "devignetteMapThreshold") return &c.devignetteMapThreshold;
     if (n == "devignetteMaskLeft") return &c.devignetteMaskLeft;

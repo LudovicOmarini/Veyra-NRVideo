@@ -94,7 +94,7 @@ bool DevignettePass::run(ID3D12GraphicsCommandList* list, StateTracker& tracker,
         settings.devignetteMaskOn ? 1.0f : 0.0f,
         std::clamp(settings.devignetteMaskLeft * pct, 0.0f, 1.0f), std::clamp(settings.devignetteMaskTop * pct, 0.0f, 1.0f),
         std::clamp(settings.devignetteMaskRight * pct, 0.0f, 1.0f), std::clamp(settings.devignetteMaskBottom * pct, 0.0f, 1.0f),
-        hdrWorking ? 1.0f : 0.0f, 0, 0};
+        hdrWorking ? 1.0f : 0.0f, std::clamp(settings.devignetteCenterY * pct, -0.25f, 0.25f), 0};
     apply_.bind(list, apply, gpuHandleOf(apply_, 0).ptr, gpuHandleOf(apply_, 2).ptr);
     list->Dispatch((width_ + 15) / 16, (height_ + 15) / 16, 1);
     tracker.uavBarrier(list, target);

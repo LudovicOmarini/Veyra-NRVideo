@@ -1,8 +1,8 @@
 // Devignette, step 3 of 3: per-pixel correction.
 // Vignette model on the encoded picture: V(r) = 1 - strength * r^falloff, with
 // r = 0 at the centre and 1 in the corners (circle: aspect-corrected; ellipse:
-// follows the frame). The gain 1/V is reduced on highlights (protect) and
-// removed on the HUD the game drew after its vignette (mask from steps 1-2 plus
+// follows the frame; the centre can be moved vertically). The gain 1/V is
+// reduced on highlights (protect) and removed on the HUD the game drew after its vignette (mask from steps 1-2 plus
 // an optional fixed region). SDR keeps the soft shoulder of the original
 // filter; HDR keeps values above diffuse white instead of compressing them.
 #include "Devignette.hlsli"
@@ -11,7 +11,7 @@ cbuffer Params : register(b0) {
     uint width; uint height; float workingToScene; float strength;
     float falloff; float protect; float ellipse; float hudAuto;
     float maskOn; float maskLeft; float maskTop; float maskRight;
-    float maskBottom; float hdrWorking; float pad0; float pad1;
+    float maskBottom; float hdrWorking; float centerY; float pad0;
 };
 Texture2D<float4> source : register(t0);
 Texture2D<float> state : register(t1);
@@ -49,9 +49,13 @@ void main(uint3 id : SV_DispatchThreadID)
     const float aspect = float(width) / float(height);
     const float3 col = DvEncode(original.rgb * workingToScene);
 
-    const float r = ellipse > 0.5 ? length(uv - 0.5) / 0.70710678
-        : length((uv - 0.5) * float2(aspect, 1.0)) / length(float2(aspect, 1.0) * 0.5);
-    const float vignette = 1.0 - strength * pow(max(saturate(r), 1e-5), falloff);
+    // centerY moves the vignette centre vertically; the radius keeps the centred
+    // normalisation (1 = a corner of a centred vignette), so 0 is the original
+    // model and the far corners of a shifted one may reach past 1.
+    const float2 d = uv - float2(0.5, 0.5 + centerY);
+    const float r = min(ellipse > 0.5 ? length(d) / 0.70710678
+        : length(d * float2(aspect, 1.0)) / length(float2(aspect, 1.0) * 0.5), 1.5);
+    const float vignette = 1.0 - strength * pow(max(r, 1e-5), falloff);
     float gain = 1.0 / max(vignette, kDvGainFloor);
 
     // Highlights: brighten less what is already bright (sun, clouds).

@@ -13912,6 +13912,32 @@
    "ru": "Сбалансированный"
   },
   {
+   "zh": "垂直中心（%）",
+   "src": "src/ui/bridge/Colour.cpp",
+   "zh-TW": "垂直中心（%）",
+   "en": "Vertical centre (%)",
+   "ja": "垂直方向の中心（%）",
+   "ko": "세로 중심(%)",
+   "es": "Centro vertical (%)",
+   "fr": "Centre vertical (%)",
+   "de": "Vertikale Mitte (%)",
+   "pt-BR": "Centro vertical (%)",
+   "ru": "Центр по вертикали (%)"
+  },
+  {
+   "zh": "垂直中心：暗角在画面上方或下方更重时移动中心（正值向下）。",
+   "src": "qml/ColourPanel.qml",
+   "zh-TW": "垂直中心：暗角在畫面上方或下方更重時移動中心（正值向下）。",
+   "en": "Vertical centre: move the centre when the vignette is heavier at the top or bottom of the picture (positive = down).",
+   "ja": "垂直方向の中心：ビネットが画面の上または下で強い場合に中心を移動します（正の値で下へ）。",
+   "ko": "세로 중심: 비네트가 화면 위나 아래에서 더 강할 때 중심을 옮깁니다(양수 = 아래).",
+   "es": "Centro vertical: mueve el centro cuando la viñeta es más fuerte arriba o abajo de la imagen (positivo = abajo).",
+   "fr": "Centre vertical : déplace le centre quand la vignette est plus forte en haut ou en bas de l’image (positif = vers le bas).",
+   "de": "Vertikale Mitte: verschiebt die Mitte, wenn die Vignette oben oder unten im Bild stärker ist (positiv = nach unten).",
+   "pt-BR": "Centro vertical: move o centro quando a vinheta é mais forte no alto ou embaixo da imagem (positivo = para baixo).",
+   "ru": "Центр по вертикали: смещает центр, если виньетка сильнее вверху или внизу кадра (положительное значение = вниз)."
+  },
+  {
    "zh": "垂直同步",
    "src": "qml/NodePage.qml",
    "zh-TW": "垂直同步",

@@ -23,7 +23,7 @@ ColumnLayout {
     property bool compact:false
     // The tab redraw staggers this column's cards (ProPage M31).
     readonly property Item sectionColumn:panel
-    readonly property var sectionCounts:[6,4,1,1,3,7,3,3,8]
+    readonly property var sectionCounts:[6,4,1,1,3,7,3,3,9]
     readonly property var sections:[qsTr("亮"),qsTr("颜色"),qsTr("曲线"),qsTr("混色器"),qsTr("颜色分级"),qsTr("校准"),"LUT",qsTr("效果"),qsTr("去暗角")]
     readonly property var light:["exposure","contrast","highlights","shadows","whites","blacks"]
     readonly property var colour:["temperature","tint","vibrance","saturation"]
@@ -443,7 +443,12 @@ ColumnLayout {
                         onPicked:id=>panel.api.setColourOption("devignetteShape",Number(id))
                     }
                 }
-                ParameterRows {Layout.fillWidth:true;keys:["devignetteStrength","devignetteFalloff","devignetteProtect"]}
+                ParameterRows {Layout.fillWidth:true;keys:["devignetteStrength","devignetteFalloff","devignetteCenterY","devignetteProtect"]}
+                Text {
+                    Layout.fillWidth:true
+                    text:qsTr("垂直中心：暗角在画面上方或下方更重时移动中心（正值向下）。")
+                    color:Theme.t3;font.pixelSize:11;wrapMode:Text.WordWrap
+                }
                 Text {
                     Layout.fillWidth:true
                     text:qsTr("高光保护：太阳和亮云提亮更少，超出白色的部分柔和过渡而不是被截断。")
